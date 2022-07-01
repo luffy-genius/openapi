@@ -32,6 +32,9 @@ setup(
     zip_safe=True,
     install_requires=[
         'httpx',
+        'pydantic',
+        'pycryptodome',
+        'cryptography'
     ],
     entry_points={
       'console_scripts': []

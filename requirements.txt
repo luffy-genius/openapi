@@ -1,1 +1,4 @@
 httpx
+pydantic
+pycryptodome
+cryptography
