@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union, List, Dict
 from datetime import datetime
 
 from pydantic import BaseModel, Field
@@ -17,7 +17,7 @@ class Token(BaseModel):
 
 class BaseResult(BaseModel):
     code: int
-    data: Optional[dict]
+    data: Optional[Union[List, Dict]]
     message: Optional[str]
 
 
