@@ -56,7 +56,7 @@ class Client(BaseClient):
                 'v': self.API_VERSION,
                 'app_key': self.app_id,
                 'timestamp': datetime.now().strftime('%Y-%m-%d %X'),
-                'method': '.'.join(list(filter(lambda _: bool(_), endpoint.split('/')))),
+                'method': '.'.join(filter(lambda _: bool(_), endpoint.split('/'))),
                 'param_json': json.dumps(data, sort_keys=True, separators=(',', ':'))
             }
         sign = calc_signature(params, self.secret)
