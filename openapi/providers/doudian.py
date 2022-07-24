@@ -1,8 +1,9 @@
 import json
 import httpx
 
+from typing import Optional, Dict
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.hashes import SHA256
+from cryptography.hazmat.primitives.hashes import SHA256, MD5, Hash
 from cryptography.hazmat.primitives.hmac import HMAC
 
 from datetime import datetime
@@ -83,3 +84,18 @@ class Client(BaseClient):
         )
         if result.code == SUCCESS_CODE:
             self._token = Token(**result.data)
+
+    def callback(self, app_id: str, sign: str, body: bytes) -> Optional[Dict]:
+        data = body.decode('utf-8')
+        if not data:
+            return
+
+        if app_id != self.app_id:
+            return
+
+        h = Hash(algorithm=MD5(), backend=default_backend())
+        h.update(f'{app_id}{data}{self.secret}'.encode('utf-8'))
+        if h.finalize().hex() != sign:
+            return
+
+        return json.loads(data)
