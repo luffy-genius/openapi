@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 class Token(BaseModel):
     access_token: str
-    refresh_token: str
+    refresh_token: Optional[str]
     expires_in: int = 7200
     created_at: datetime = Field(default_factory=datetime.now)
 
