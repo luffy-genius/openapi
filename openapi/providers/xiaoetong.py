@@ -4,15 +4,19 @@
 
 import json
 import httpx
+from typing import Optional
+
+from openapi.exceptions import DisallowedHost
 
 from .base import BaseClient, BaseResult, Token
 
 
 SUCCESS_CODE = 0
+INVALID_WHITE_LIST_CODE = 2051
 
 
 class Result(BaseResult):
-    pass
+    msg: Optional[str] = ''
 
 
 class Client(BaseClient):
@@ -30,16 +34,26 @@ class Client(BaseClient):
         self, method, endpoint, params=None, data=None,
         token_request=False
     ) -> Result:
+        if not token_request:
+            if method == 'get':
+                params['access_token'] = self.access_token
+
+            if method == 'post':
+                data['access_token'] = self.access_token
+
         request_url = f'{self.API_BASE_URL}{endpoint}'
         response = httpx.request(
             method, request_url,
             params=params,
-            data=json.dumps(data).encode() if data is not None else None
+            data=json.dumps(
+                data, ensure_ascii=False
+            ).encode() if data is not None else None
         )
+        return Result(**response.json())
 
     def fetch_access_token(self):
-        result = self.request(
-            'post', '/token', params={
+        result: Result = self.request(
+            'get', '/token', params={
                 'app_id': self.app_id,
                 'secret_key': self.secret,
                 'client_id': self.client_id,
@@ -49,3 +63,6 @@ class Client(BaseClient):
         )
         if result.code == SUCCESS_CODE:
             self._token = Token(**result.data)
+
+        if result.code == INVALID_WHITE_LIST_CODE:
+            raise DisallowedHost(result.msg)
