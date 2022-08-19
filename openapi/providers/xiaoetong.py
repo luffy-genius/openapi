@@ -1,8 +1,3 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-# Date: 2022/7/1
-
-import json
 import httpx
 from typing import Optional
 
@@ -40,14 +35,11 @@ class Client(BaseClient):
 
             if method == 'post':
                 data['access_token'] = self.access_token
-
         request_url = f'{self.API_BASE_URL}{endpoint}'
         response = httpx.request(
             method, request_url,
             params=params,
-            data=json.dumps(
-                data, ensure_ascii=False
-            ).encode() if data is not None else None
+            json=data
         )
         return Result(**response.json())
 
