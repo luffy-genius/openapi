@@ -58,7 +58,13 @@ class Client(BaseClient):
                 'app_key': self.app_id,
                 'timestamp': datetime.now().strftime('%Y-%m-%d %X'),
                 'method': '.'.join(filter(lambda _: bool(_), endpoint.split('/'))),
-                'param_json': json.dumps(data, sort_keys=True, separators=(',', ':'))
+                'param_json': json.dumps(
+                    {
+                        key: value
+                        for key, value in data.items() if value is not None
+                    },
+                    sort_keys=True, separators=(',', ':')
+                )
             }
         sign = calc_signature(params, self.secret)
         params['sign_method'] = 'hmac-sha256'
