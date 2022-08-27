@@ -2,3 +2,4 @@ httpx
 pydantic
 pycryptodome
 cryptography
+pyOpenSSL==22.0.0

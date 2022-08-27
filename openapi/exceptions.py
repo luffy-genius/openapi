@@ -6,3 +6,7 @@ class OpenAPIException(Exception):
 
 class DisallowedHost(OpenAPIException):
     pass
+
+
+class NotFoundPath(OpenAPIException):
+    pass

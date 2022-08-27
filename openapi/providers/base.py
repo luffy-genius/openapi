@@ -32,6 +32,9 @@ class BaseClient:
     def fetch_access_token(self):
         raise NotImplementedError()
 
+    def request(self, *args, **kwargs):
+        raise NotImplementedError()
+
     def refresh_access_token(self):
         pass
 
