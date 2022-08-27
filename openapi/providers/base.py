@@ -12,7 +12,7 @@ class Token(BaseModel):
 
     @property
     def is_valid(self):
-        return (datetime.now() - self.created_at).total_seconds() > (self.expires_in - self.expires_in * 0.2)
+        return (datetime.now() - self.created_at).total_seconds() < (self.expires_in - self.expires_in * 0.3)
 
 
 class BaseResult(BaseModel):
