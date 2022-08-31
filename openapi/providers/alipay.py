@@ -12,20 +12,21 @@ from Crypto.Signature import PKCS1_v1_5
 from Crypto.Hash import SHA256
 
 from ..exceptions import NotFoundPath
-from .base import BaseClient, BaseResult, Token
+from .base import BaseClient, BaseResult
 
 
-def calculate_signature(params, api_key):
-    ordered_items = sorted(
-        ((k, v if not isinstance(v, dict) else json.dumps(v, separators=(',', ':')))
-         for k, v in params.items())
-    )
-    unsigned_string = '&'.join('{0}={1}'.format(k, v) for k, v in ordered_items)
+SUCCESS_CODE = 0
+
+
+class Result(BaseResult):
+    code = 0
+
+
+def calculate_signature(unsigned_string, api_key):
     signer = PKCS1_v1_5.new(api_key)
-    signature = signer.sign(SHA256.new(unsigned_string.encode('utf-8')))
+    signature = signer.sign(SHA256.new(unsigned_string))
     # base64 编码，转换为unicode表示并移除回车
-    sign = encodebytes(signature).decode('utf-8').replace('\n', '')
-    return sign
+    return encodebytes(signature).decode('utf-8').replace('\n', '')
 
 
 class Client(BaseClient):
@@ -49,15 +50,15 @@ class Client(BaseClient):
 
         app_cert_public_key_path = Path(app_cert_public_key_path)
         if not app_cert_public_key_path.exists():
-            raise NotFoundPath(f'{app_private_key_path} not found')
+            raise NotFoundPath(f'{app_cert_public_key_path} not found')
 
         alipay_root_cert_path = Path(alipay_root_cert_path)
         if not alipay_root_cert_path.exists():
-            raise NotFoundPath(f'{app_private_key_path} not found')
+            raise NotFoundPath(f'{alipay_root_cert_path} not found')
 
         alipay_cert_public_key_path = Path(alipay_cert_public_key_path)
         if not alipay_cert_public_key_path.exists():
-            raise NotFoundPath(f'{app_private_key_path} not found')
+            raise NotFoundPath(f'{alipay_cert_public_key_path} not found')
 
         # 加载应用的私钥
         with open(app_private_key_path) as fp:
@@ -99,13 +100,20 @@ class Client(BaseClient):
         return default
 
     def build_query_params(self, data):
-        sign = calculate_signature(data, self.app_private_key)
-        quoted_string = '&'.join('{0}={1}'.format(k, quote_plus(v)) for k, v in data)
-        signed_string = f'{quoted_string}&sign={quote_plus(sign)}'
-        return signed_string
+        ordered_items = sorted(
+            ((k, v if not isinstance(v, dict) else json.dumps(v, separators=(',', ':')))
+             for k, v in data.items())
+        )
+        unsigned_string = '&'.join(f'{k}={v}' for k, v in ordered_items)
+        sign = calculate_signature(unsigned_string.encode('utf-8'), self.app_private_key)
+        quoted_string = '&'.join(f'{k}={quote_plus(v)}' for k, v in ordered_items)
+        return f'{quoted_string}&sign={quote_plus(sign)}'
 
-    def request(self, method, endpoint='', params=None, data=''):
-        pass
+    def request(self, method, endpoint='', params=None, data=None):
+        params = self.build_query_params(self.build_params(endpoint, params))
+        response = httpx.request(method, url=f'{self.API_BASE_URL}?{params}')
+        response.raise_for_status()
+        return Result(data=response.json()[f'{"_".join(endpoint.split("."))}_response'])
 
     @property
     def alipay_public_key(self):
