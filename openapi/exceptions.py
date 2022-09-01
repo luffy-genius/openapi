@@ -1,3 +1,4 @@
+from httpx import HTTPError
 
 
 class OpenAPIException(Exception):
@@ -9,4 +10,8 @@ class DisallowedHost(OpenAPIException):
 
 
 class NotFoundPath(OpenAPIException):
+    pass
+
+
+class OpenAPIHttpError(OpenAPIException, HTTPError):
     pass
