@@ -1,5 +1,6 @@
 import json
 import httpx
+from typing import Optional
 
 from openapi.providers.base import BaseClient, BaseResult, Token
 from openapi.exceptions import DisallowedHost
@@ -9,8 +10,8 @@ INVALID_WHITE_LIST_CODE = 40164
 
 
 class Result(BaseResult):
-    errcode: int
-    errmsg: str
+    errcode: int = SUCCESS_CODE
+    errmsg: Optional[str]
 
 
 class Client(BaseClient):
@@ -37,7 +38,7 @@ class Client(BaseClient):
             method, request_url,
             params=params, data=json.dumps(data).encode() if data else None
         )
-        return Result(**response.json())
+        return Result(**({'data': response.json()} if token_request else response.json()))
 
     def fetch_access_token(self):
         result = self.request(
