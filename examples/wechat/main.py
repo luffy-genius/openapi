@@ -1,5 +1,7 @@
 from openapi.providers.wechat import Client
 
-client = Client(app_id='', secret='')
+from examples.config import config
+
+client = Client(**config['wechat'])
 
 client.fetch_access_token()
