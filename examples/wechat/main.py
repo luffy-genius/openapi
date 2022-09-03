@@ -4,4 +4,20 @@ from examples.config import config
 
 client = Client(**config['wechat'])
 
-client.fetch_access_token()
+# 发送文本消息
+result = client.request(
+    'post', '/message/template/send',
+    data={
+        'touser': 'ofwIAuOwpNTVRDBK82KRuH7xhpXo',
+        'template_id': 'juLkJRq6c2aijf0W9AZcf2pbfVbAl5qvsd8vD9D4HLI',
+        'data': {
+            'first': {'value': f'您的学生 谷爱凌 同学，已开通新模块：'},
+            'keyword1': {'value': 'Python开发'},
+            'keyword2': {'value': '2022-09-03 15:34'},
+            'remark': {'value': '开通模块：第一模块'}
+        },
+        'url': None,
+        'miniprogram': None
+    }
+)
+print(result)

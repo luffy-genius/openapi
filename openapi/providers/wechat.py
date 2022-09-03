@@ -12,6 +12,7 @@ INVALID_WHITE_LIST_CODE = 40164
 class Result(BaseResult):
     errcode: int = SUCCESS_CODE
     errmsg: Optional[str]
+    msgid: Optional[int]
 
 
 class Client(BaseClient):
