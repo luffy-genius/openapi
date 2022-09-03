@@ -4,13 +4,16 @@ from typing import Optional
 
 from openapi.providers.base import BaseClient, BaseResult, Token
 from openapi.exceptions import DisallowedHost
+from openapi.enums import IntegerChoices
 
-SUCCESS_CODE = 0
-INVALID_WHITE_LIST_CODE = 40164
+
+class Code(IntegerChoices):
+    SUCCESS_CODE = 0, '成功'
+    INVALID_WHITE_LIST_CODE = 40164, 'ip 未在白名单'
 
 
 class Result(BaseResult):
-    errcode: int = SUCCESS_CODE
+    errcode: int = Code.SUCCESS_CODE
     errmsg: Optional[str]
     msgid: Optional[int]
 
@@ -24,6 +27,7 @@ class Client(BaseClient):
         super().__init__()
         self.app_id = app_id
         self.secret = secret
+        self.code = Code
 
     def request(
         self, method, endpoint, params=None, data=None,
@@ -39,7 +43,11 @@ class Client(BaseClient):
             method, request_url,
             params=params, data=json.dumps(data).encode() if data else None
         )
-        return Result(**({'data': response.json()} if token_request else response.json()))
+        result = response.json()
+        if 'errcode' in result:
+            return Result(**result)
+        else:
+            return Result(data=result)
 
     def fetch_access_token(self):
         result = self.request(
@@ -50,8 +58,8 @@ class Client(BaseClient):
             },
             token_request=True
         )
-        if result.errcode == SUCCESS_CODE:
+        if result.errcode == self.code.SUCCESS_CODE:
             self._token = Token(**result.data)
 
-        if result.errcode == INVALID_WHITE_LIST_CODE:
+        if result.errcode == self.code.INVALID_WHITE_LIST_CODE:
             raise DisallowedHost(result.errmsg)

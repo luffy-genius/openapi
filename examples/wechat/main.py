@@ -21,3 +21,4 @@ result = client.request(
     }
 )
 print(result)
+print(result.errcode == client.code.SUCCESS_CODE)
