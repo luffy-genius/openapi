@@ -1,14 +1,8 @@
 from openapi.providers.alipay import Client
 
+from examples.config import config
 
-client = Client(
-    app_id='2016081500252288',
-    app_private_key_path='./resources/app_private_test2',
-    app_cert_public_key_path='./resources/appCertPublicKey_2016081500252288_test.crt',
-    alipay_root_cert_path='./resources/alipayRootCert_test.crt',
-    alipay_cert_public_key_path='./resources/alipayCertPublicKey_RSA2_test.crt',
-    is_sandbox=True
-)
+client = Client(**config['alipay'], is_sandbox=True)
 
 
 if __name__ == '__main__':

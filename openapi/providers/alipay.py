@@ -106,7 +106,7 @@ class Client(BaseClient):
         )
         unsigned_string = '&'.join(f'{k}={v}' for k, v in ordered_items)
         sign = calculate_signature(unsigned_string.encode('utf-8'), self.app_private_key)
-        quoted_string = '&'.join(f'{k}={quote_plus(v)}' for k, v in ordered_items)
+        quoted_string = '&'.join(f'{k}={quote_plus(str(v).encode())}' for k, v in ordered_items)
         return f'{quoted_string}&sign={quote_plus(sign)}'
 
     def request(self, method, endpoint='', params=None, data=None):

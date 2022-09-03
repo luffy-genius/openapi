@@ -1,0 +1,11 @@
+# For test, More: https://mp.weixin.qq.com/debug/cgi-bin/sandboxinfo?action=showinfo&t=sandbox/index
+wechat:
+  app_id: wx3a1c383b011d8d1b
+  secret: 34a78aab09452547007e739b61d4c10a
+
+alipay:
+  app_id: 2016081500252288
+  app_private_key_path: './resources/app_private_test2'
+  app_cert_public_key_path: './resources/appCertPublicKey_2016081500252288_test.crt'
+  alipay_root_cert_path: './resources/alipayRootCert_test.crt'
+  alipay_cert_public_key_path: './resources/alipayCertPublicKey_RSA2_test.crt'
