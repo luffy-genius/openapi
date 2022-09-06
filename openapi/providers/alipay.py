@@ -11,15 +11,17 @@ from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 from Crypto.Hash import SHA256
 
-from ..exceptions import NotFoundPath
-from .base import BaseClient, BaseResult
+from openapi.enums import IntegerChoices
+from openapi.exceptions import NotFoundPath
+from openapi.providers.base import BaseClient, BaseResult
 
 
-SUCCESS_CODE = 0
+class Code(IntegerChoices):
+    SUCCESS = 0, '成功'
 
 
 class Result(BaseResult):
-    code = 0
+    code: Code = Code.SUCCESS
 
 
 def calculate_signature(unsigned_string, api_key):
@@ -42,6 +44,7 @@ class Client(BaseClient):
         super().__init__()
         self.API_BASE_URL = f'https://openapi.alipay{"dev" if is_sandbox else ""}.com/gateway.do'
 
+        self.code = Code
         self.app_id = app_id
 
         app_private_key_path = Path(app_private_key_path)

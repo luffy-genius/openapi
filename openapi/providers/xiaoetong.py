@@ -3,11 +3,13 @@ from typing import Optional
 
 from openapi.exceptions import DisallowedHost
 
-from .base import BaseClient, BaseResult, Token
+from openapi.enums import IntegerChoices
+from openapi.providers.base import BaseClient, BaseResult, Token
 
 
-SUCCESS_CODE = 0
-INVALID_WHITE_LIST_CODE = 2051
+class Code(IntegerChoices):
+    SUCCESS = 0, '成功'
+    INVALID_WHITE_LIST_CODE = 2051, 'ip 未在白名单'
 
 
 class Result(BaseResult):
@@ -21,6 +23,8 @@ class Client(BaseClient):
 
     def __init__(self, app_id, secret, client_id=None):
         super().__init__()
+        self.code = Code
+
         self.app_id = app_id
         self.secret = secret
         self.client_id = client_id
@@ -53,8 +57,8 @@ class Client(BaseClient):
             },
             token_request=True
         )
-        if result.code == SUCCESS_CODE:
+        if result.code == Code.SUCCESS_CODE:
             self._token = Token(**result.data)
 
-        if result.code == INVALID_WHITE_LIST_CODE:
+        if result.code == Code.INVALID_WHITE_LIST_CODE:
             raise DisallowedHost(result.msg)

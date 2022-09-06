@@ -8,13 +8,17 @@ from cryptography.hazmat.primitives.hmac import HMAC
 
 from datetime import datetime
 
-from .base import BaseClient, BaseResult, Token
+from openapi.enums import IntegerChoices
+from openapi.providers.base import BaseClient, BaseResult, Token
+
 
 SIGN_FIELDS = [
     'app_key', 'method', 'param_json', 'timestamp', 'v'
 ]
 
-SUCCESS_CODE = 10000
+
+class Code(IntegerChoices):
+    SUCCESS = 10000, '成功'
 
 
 def format_params(params, secret=None):
@@ -47,6 +51,7 @@ class Client(BaseClient):
         self.app_id = app_id
         self.secret = secret
         self.shop_id = shop_id
+        self.code = Code
 
     def request(
         self, method, endpoint, params=None, data=None,
@@ -88,7 +93,7 @@ class Client(BaseClient):
             },
             token_request=True
         )
-        if result.code == SUCCESS_CODE:
+        if result.code == Code.SUCCESS:
             self._token = Token(**result.data)
 
     def callback(self, app_id: str, sign: str, body: bytes) -> Optional[Dict]:
