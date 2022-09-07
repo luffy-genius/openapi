@@ -1,4 +1,3 @@
-import httpx
 import secrets
 import hashlib
 from typing import Dict
@@ -26,7 +25,7 @@ def calculate_signature(params, api_key, sign_type='MD5'):
 
 
 class Client(BaseClient):
-
+    NAME = '微信支付'
     API_BASE_URL = 'https://api.mch.weixin.qq.com'
     API_VERSION = ''
 
@@ -63,7 +62,7 @@ class Client(BaseClient):
                 data, self.debug_api_key if self.is_sandbox else self.api_key
             )
 
-        response = httpx.request(
+        response = self._request(
             method, request_url,
             params=params, data=dict_to_xml(data).encode('utf-8')
         )

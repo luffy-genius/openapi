@@ -2,7 +2,9 @@ from openapi.providers.wechat import Client
 
 from examples.config import config
 
+print(config)
 client = Client(**config['wechat'])
+client.add_webhook(config['openapi_webhook'])
 
 # 发送文本消息
 result = client.request(
@@ -21,4 +23,4 @@ result = client.request(
     }
 )
 print(result)
-print(result.errcode == client.code.SUCCESS_CODE)
+print(result.errcode == client.codes.SUCCESS_CODE)

@@ -1,5 +1,3 @@
-import json
-import httpx
 from typing import Optional
 
 from openapi.providers.base import BaseClient, BaseResult, Token
@@ -8,8 +6,8 @@ from openapi.enums import IntegerChoices
 
 
 class Code(IntegerChoices):
-    SUCCESS_CODE = 0, '成功'
-    INVALID_WHITE_LIST_CODE = 40164, 'ip 未在白名单'
+    SUCCESS = 0, '成功'
+    INVALID_WHITE_LIST = 40164, 'ip 未在白名单'
 
 
 class Result(BaseResult):
@@ -19,7 +17,7 @@ class Result(BaseResult):
 
 
 class Client(BaseClient):
-
+    NAME = '微信服务号'
     API_BASE_URL = 'https://api.weixin.qq.com/cgi-bin'
     API_VERSION = ''
 
@@ -27,7 +25,7 @@ class Client(BaseClient):
         super().__init__()
         self.app_id = app_id
         self.secret = secret
-        self.code = Code
+        self.codes = Code
 
     def request(
         self, method, endpoint, params=None, data=None,
@@ -39,9 +37,9 @@ class Client(BaseClient):
             params['access_token'] = self.access_token
 
         request_url = f'{self.API_BASE_URL}{endpoint}'
-        response = httpx.request(
+        response = self._request(
             method, request_url,
-            params=params, data=json.dumps(data).encode() if data else None
+            params=params, json=data
         )
         result = response.json()
         if 'errcode' in result:
@@ -58,8 +56,8 @@ class Client(BaseClient):
             },
             token_request=True
         )
-        if result.errcode == self.code.SUCCESS_CODE:
+        if result.errcode == self.codes.SUCCESS:
             self._token = Token(**result.data)
 
-        if result.errcode == self.code.INVALID_WHITE_LIST_CODE:
+        if result.errcode == self.codes.INVALID_WHITE_LIST:
             raise DisallowedHost(result.errmsg)

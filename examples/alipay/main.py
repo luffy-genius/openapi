@@ -2,7 +2,9 @@ from openapi.providers.alipay import Client
 
 from examples.config import config
 
+print(config)
 client = Client(**config['alipay'], is_sandbox=True)
+client.add_webhook(config['openapi_webhook'])
 
 
 if __name__ == '__main__':

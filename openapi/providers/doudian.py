@@ -1,5 +1,4 @@
 import json
-import httpx
 
 from typing import Optional, Dict
 from cryptography.hazmat.backends import default_backend
@@ -42,6 +41,7 @@ class Result(BaseResult):
 
 
 class Client(BaseClient):
+    NAME = '抖店'
     API_BASE_URL = 'https://openapi-fxg.jinritemai.com/'
     API_VERSION = 2
 
@@ -51,7 +51,7 @@ class Client(BaseClient):
         self.app_id = app_id
         self.secret = secret
         self.shop_id = shop_id
-        self.code = Code
+        self.codes = Code
 
     def request(
         self, method, endpoint, params=None, data=None,
@@ -78,10 +78,7 @@ class Client(BaseClient):
             params['access_token'] = self.access_token
 
         request_url = f'{self.API_BASE_URL}{endpoint}'
-        response = httpx.request(
-            method, request_url,
-            params=params, data=data
-        )
+        response = self._request(method, request_url, params=params, data=data)
         return Result(**response.json())
 
     def fetch_access_token(self):
@@ -93,7 +90,7 @@ class Client(BaseClient):
             },
             token_request=True
         )
-        if result.code == Code.SUCCESS:
+        if result.code == self.codes.SUCCESS:
             self._token = Token(**result.data)
 
     def callback(self, app_id: str, sign: str, body: bytes) -> Optional[Dict]:

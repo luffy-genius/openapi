@@ -1,5 +1,4 @@
 import json
-import httpx
 import hashlib
 import OpenSSL
 from pathlib import Path
@@ -32,6 +31,7 @@ def calculate_signature(unsigned_string, api_key):
 
 
 class Client(BaseClient):
+    NAME = '支付宝'
     API_BASE_URL = 'https://openapi.alipay.com/gateway.do'
     API_VERSION = '1.0'
 
@@ -44,7 +44,7 @@ class Client(BaseClient):
         super().__init__()
         self.API_BASE_URL = f'https://openapi.alipay{"dev" if is_sandbox else ""}.com/gateway.do'
 
-        self.code = Code
+        self.codes = Code
         self.app_id = app_id
 
         app_private_key_path = Path(app_private_key_path)
@@ -114,7 +114,7 @@ class Client(BaseClient):
 
     def request(self, method, endpoint='', params=None, data=None):
         params = self.build_query_params(self.build_params(endpoint, params))
-        response = httpx.request(method, url=f'{self.API_BASE_URL}?{params}')
+        response = self._request(method, f'{self.API_BASE_URL}?{params}')
         response.raise_for_status()
         return Result(data=response.json()[f'{"_".join(endpoint.split("."))}_response'])
 

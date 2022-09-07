@@ -1,4 +1,3 @@
-import httpx
 from typing import Optional
 
 from openapi.exceptions import DisallowedHost
@@ -9,7 +8,7 @@ from openapi.providers.base import BaseClient, BaseResult, Token
 
 class Code(IntegerChoices):
     SUCCESS = 0, '成功'
-    INVALID_WHITE_LIST_CODE = 2051, 'ip 未在白名单'
+    INVALID_WHITE_LIST = 2051, 'ip 未在白名单'
 
 
 class Result(BaseResult):
@@ -17,13 +16,13 @@ class Result(BaseResult):
 
 
 class Client(BaseClient):
-
+    NAME = '小鹅通'
     API_VERSION = ''
     API_BASE_URL = 'https://api.xiaoe-tech.com'
 
     def __init__(self, app_id, secret, client_id=None):
         super().__init__()
-        self.code = Code
+        self.codes = Code
 
         self.app_id = app_id
         self.secret = secret
@@ -40,10 +39,9 @@ class Client(BaseClient):
             if method == 'post':
                 data['access_token'] = self.access_token
         request_url = f'{self.API_BASE_URL}{endpoint}'
-        response = httpx.request(
+        response = self._request(
             method, request_url,
-            params=params,
-            json=data
+            params=params, json=data
         )
         return Result(**response.json())
 
@@ -57,8 +55,8 @@ class Client(BaseClient):
             },
             token_request=True
         )
-        if result.code == Code.SUCCESS_CODE:
+        if result.code == self.codes.SUCCESS:
             self._token = Token(**result.data)
 
-        if result.code == Code.INVALID_WHITE_LIST_CODE:
+        if result.code == self.codes.INVALID_WHITE_LIST:
             raise DisallowedHost(result.msg)
