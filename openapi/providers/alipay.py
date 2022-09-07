@@ -17,6 +17,7 @@ from openapi.providers.base import BaseClient, BaseResult
 
 class Code(IntegerChoices):
     SUCCESS = 0, '成功'
+    FAIL = -1, '失败'
 
 
 class Result(BaseResult):
@@ -115,8 +116,10 @@ class Client(BaseClient):
     def request(self, method, endpoint='', params=None, data=None):
         params = self.build_query_params(self.build_params(endpoint, params))
         response = self._request(method, f'{self.API_BASE_URL}?{params}')
-        response.raise_for_status()
-        return Result(data=response.json()[f'{"_".join(endpoint.split("."))}_response'])
+        if response is not None:
+            return Result(data=response.json()[f'{"_".join(endpoint.split("."))}_response'])
+        else:
+            return Result(code=self.codes.FAIL)
 
     @property
     def alipay_public_key(self):

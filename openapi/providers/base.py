@@ -16,6 +16,7 @@ data:
 result:
 {result}
 is_error: {is_error}
+errmsg: {errmsg}
 """
 
 SENSITIVE_KEYS = ['secret', 'secret_key']
@@ -71,14 +72,16 @@ class BaseClient:
     ) -> httpx.Response:
         response = None
         is_error = False
+        errmsg = ''
         try:
             response = httpx.request(
                 method, request_url, headers=headers,
                 params=params, data=data, json=json
             )
             is_error = response.is_error
-        except httpx.HTTPError:
+        except httpx.HTTPError as exc:
             is_error = True
+            errmsg = str(exc)
         finally:
             format_data = {
                 'date': datetime.now().strftime('%Y-%m-%d %X'),
@@ -93,7 +96,7 @@ class BaseClient:
                     response.json() if response else None,
                     indent=2, ensure_ascii=False
                 ),
-                'is_error': is_error
+                'is_error': is_error, 'errmsg': errmsg
             }
             if self.enable_webhook and self.webhook_url:
                 self.send_webhook_message(MESSAGE_TEMPLATE.format(**format_data))
