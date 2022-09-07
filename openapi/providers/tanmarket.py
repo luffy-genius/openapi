@@ -34,11 +34,9 @@ class Client(BaseClient):
             headers = {}
 
         timestamp = f'{int(time.time() * 1000)}'
-        print(f'{self.app_id}{timestamp}{data or json}{self.app_key}')
-        print(calc_signature(f'{self.app_id}{timestamp}{data or json}{self.app_key}'))
         headers.update(**{
             'appId': self.app_id,
             'timestamp': timestamp,
-            'sign': calc_signature(f'{self.app_id}{timestamp}{data or json}{self.app_key}')
+            'sign': calc_signature(f'{self.app_id}{timestamp}{data or json}{self.app_key}'.replace("'", '"'))
         })
         return self._request(method, request_url, params, data, json, headers)
