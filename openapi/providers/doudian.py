@@ -17,6 +17,7 @@ SIGN_FIELDS = [
 
 
 class Code(IntegerChoices):
+    FAIL = -1, '失败'
     SUCCESS = 10000, '成功'
 
 
@@ -79,7 +80,7 @@ class Client(BaseClient):
 
         request_url = f'{self.API_BASE_URL}{endpoint}'
         response = self._request(method, request_url, params=params, data=data)
-        return Result(**response.json())
+        return Result(**response.json()) if response else Result(code=self.codes.FAIL)
 
     def fetch_access_token(self):
         result = self.request(

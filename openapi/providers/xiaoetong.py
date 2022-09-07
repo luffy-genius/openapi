@@ -7,6 +7,7 @@ from openapi.providers.base import BaseClient, BaseResult, Token
 
 
 class Code(IntegerChoices):
+    FAIL = -1, '失败'
     SUCCESS = 0, '成功'
     INVALID_WHITE_LIST = 2051, 'ip 未在白名单'
 
@@ -39,11 +40,8 @@ class Client(BaseClient):
             if method == 'post':
                 data['access_token'] = self.access_token
         request_url = f'{self.API_BASE_URL}{endpoint}'
-        response = self._request(
-            method, request_url,
-            params=params, json=data
-        )
-        return Result(**response.json())
+        response = self._request(method, request_url, params=params, json=data)
+        return Result(**response.json()) if response else Result(code=self.codes.FAIL)
 
     def fetch_access_token(self):
         result: Result = self.request(

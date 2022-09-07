@@ -6,6 +6,7 @@ from openapi.enums import IntegerChoices
 
 
 class Code(IntegerChoices):
+    FAIL = -1, '失败'
     SUCCESS = 0, '成功'
     INVALID_WHITE_LIST = 40164, 'ip 未在白名单'
 
@@ -41,6 +42,9 @@ class Client(BaseClient):
             method, request_url,
             params=params, json=data
         )
+        if response is None:
+            Result(code=self.codes.FAIL)
+
         result = response.json()
         if 'errcode' in result:
             return Result(**result)
