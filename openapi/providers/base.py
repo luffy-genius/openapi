@@ -9,6 +9,8 @@ from pydantic import BaseModel, Field
 MESSAGE_TEMPLATE = """date: {date}
 method: {method}
 request-url: {endpoint}
+headers: 
+{headers}
 params: 
 {params}
 data:
@@ -86,6 +88,9 @@ class BaseClient:
             format_data = {
                 'date': datetime.now().strftime('%Y-%m-%d %X'),
                 'method': method, 'endpoint': request_url,
+                'headers': _json.dumps(
+                    mask_sensitive_data(headers or {}), indent=2, ensure_ascii=False
+                ),
                 'params': _json.dumps(
                     mask_sensitive_data(params or {}), indent=2, ensure_ascii=False
                 ),
