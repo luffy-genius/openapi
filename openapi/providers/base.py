@@ -54,7 +54,7 @@ class Token(BaseModel):
 
 class BaseResult(BaseModel):
     code: Optional[int]
-    data: Optional[Union[List, Dict]]
+    data: Optional[Union[List, Dict, int]]
     message: Optional[str]
 
 
