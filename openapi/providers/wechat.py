@@ -12,7 +12,7 @@ class Code(IntegerChoices):
 
 
 class Result(BaseResult):
-    errcode: int = Code.SUCCESS_CODE
+    errcode: int = Code.SUCCESS
     errmsg: Optional[str]
     msgid: Optional[int]
 

@@ -1,6 +1,6 @@
 from openapi.providers.wechat import Code
 
-print(Code.SUCCESS_CODE.label)
-print(Code.SUCCESS_CODE.name)
-print(Code.SUCCESS_CODE.value)
-print(Code.SUCCESS_CODE == 0)
+print(Code.SUCCESS.label)
+print(Code.SUCCESS.name)
+print(Code.SUCCESS.value)
+print(Code.SUCCESS == 0)
