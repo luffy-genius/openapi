@@ -1,9 +1,12 @@
+import pprint
 from openapi.providers.tanmarket import Client
 
 from examples.config import config
 
 client = Client(**config['tanmarket'])
 client.add_webhook(config['openapi_webhook'])
+
+pprint.pprint(client.request('post', '/v3/profile-fields', json={}).data)
 
 # /v3/profile-fields/map
 FIELDS = [
@@ -40,7 +43,7 @@ FIELDS = [
         'alias': '渠道来源'
     },
     {
-        'fieldId': '105474',
+        'fieldId': '105739',
         'alias': '首次报名课程'
     },
     {
@@ -51,5 +54,6 @@ FIELDS = [
 
 if __name__ == '__main__':
     for alias in FIELDS:
-        result = client.request('post', '/v3/profile-fields/map', json=alias)
-        print(alias, result)
+        pass
+        # result = client.request('post', '/v3/profile-fields/map', json=alias)
+        # print(alias, result)

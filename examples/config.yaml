@@ -20,3 +20,9 @@ alipay:
 tanmarket:
   app_id:
   app_key:
+
+sms:
+  to:
+  submail:
+    app_id:
+    app_key:

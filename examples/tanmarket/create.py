@@ -11,13 +11,15 @@ result = client.request(
     json={'hello': 'tanmarket'}
 )
 # print('>>>>', result)
+# code=40417 data=None message='请求参数验证失败：电话号码重复'
+# code=0 data=497186786844992 message='success'
 
 if __name__ == '__main__':
     print(client.request('post', '/v3/profile-fields', json={}))
 
     result = client.request('post', '/v3/add-clue', json={
         'customerName': 'liuzhichao-test',
-        'mobiles': ['18803561679'],
+        'mobiles': ['18803561681'],
         'fields': [
             {
                 'alias': '首次报名课程',
