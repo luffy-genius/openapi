@@ -21,7 +21,7 @@ is_error: {is_error}
 errmsg: {errmsg}
 """
 
-SENSITIVE_KEYS = ['app_key', 'secret', 'secret_key']
+SENSITIVE_KEYS = ['app_key', 'secret', 'secret_key', 'signature']
 
 
 def mask_sensitive_data(data):

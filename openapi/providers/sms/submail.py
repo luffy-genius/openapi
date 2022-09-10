@@ -18,6 +18,7 @@ class Result(BaseResult):
 
 
 class Client(BaseClient):
+    NAME = '赛邮-云通信'
     API_BASE_URL = 'https://api.mysubmail.com'
     API_VERSION = ''
 
