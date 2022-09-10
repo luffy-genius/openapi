@@ -43,5 +43,4 @@ class Client(BaseClient):
             'appid': self.app_id, 'signature': self.app_key
         })
         response = self._request(method, request_url, params, data, json)
-        print(response.json())
         return Result(**(response.json() if response else {'status': self.codes.FAIL}))
