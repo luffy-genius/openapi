@@ -21,6 +21,11 @@ tanmarket:
   app_id:
   app_key:
 
+yunduo:
+  company_id:
+  token:
+  general_token:
+
 sms:
   to:
   submail:

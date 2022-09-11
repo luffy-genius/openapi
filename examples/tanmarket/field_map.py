@@ -1,5 +1,5 @@
 import pprint
-from openapi.providers.tanmarket import Client
+from openapi.providers.crm.tanmarket import Client
 
 from examples.config import config
 
