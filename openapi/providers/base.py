@@ -59,18 +59,19 @@ class BaseResult(BaseModel):
 
 
 class BaseClient:
-
-    NAME = ''
-    API_BASE_URL = None
-    API_VERSION = None
+    NAME = 'Unknown Client'
+    API_BASE_URL = ''
+    API_VERSION = ''
 
     def __init__(self):
+        self._ignore_endpoints = []
         self._token: Optional[Token] = None
         self.enable_webhook = False
         self.webhook_url = None
 
     def _request(
-        self, method, request_url, params=None, data=None, json=None, headers=None
+        self, method, request_url,
+        params=None, data=None, json=None, headers=None
     ) -> httpx.Response:
         response = None
         is_error = False
@@ -103,7 +104,8 @@ class BaseClient:
                 ),
                 'is_error': is_error, 'errmsg': errmsg
             }
-            if self.enable_webhook and self.webhook_url:
+            endpoint = request_url.replace(self.API_BASE_URL, '')
+            if self.enable_webhook and self.webhook_url and endpoint not in self._ignore_endpoints:
                 self.send_webhook_message(MESSAGE_TEMPLATE.format(**format_data))
 
         return response
@@ -140,6 +142,8 @@ class BaseClient:
             self.fetch_access_token()
         return self._token.access_token if self._token is not None else ''
 
-    def add_webhook(self, webhook_url):
+    def add_webhook(self, webhook_url, ignore_endpoints: Optional[List] = None):
         self.enable_webhook = True
         self.webhook_url = webhook_url
+        if ignore_endpoints:
+            self._ignore_endpoints = ignore_endpoints
