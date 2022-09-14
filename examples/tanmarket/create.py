@@ -15,10 +15,8 @@ result = client.request(
 # code=0 data=497186786844992 message='success'
 
 if __name__ == '__main__':
-    print(client.request('post', '/v3/profile-fields', json={}))
-
     result = client.request('post', '/v3/add-clue', json={
-        'customerName': 'liuzhichao-test',
+        'customerName': 'liuzhichao-test1',
         'mobiles': ['18803561681'],
         'fields': [
             {
@@ -27,12 +25,12 @@ if __name__ == '__main__':
             },
             {
                 'alias': '下单时间',
-                'fieldValue': '2022-09-08 01:01:00'
+                'fieldValue': '2022-09-14 21:01:00'
             },
-            # {
-            #     'alias': '电话',
-            #     'fieldValue': '18803561683'
-            # },
+            {
+                'alias': '电话',
+                'fieldValue': '18803561681'
+            },
             {
                 'alias': '性别',
                 'fieldValue': 0

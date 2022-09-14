@@ -31,3 +31,8 @@ sms:
   submail:
     app_id:
     app_key:
+
+doudian:
+  app_id:
+  secret:
+  shop_id:

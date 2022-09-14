@@ -49,10 +49,19 @@ FIELDS = [
     {
         'fieldId': '104219',
         'alias': '描述'
+    },
+    {
+        'fieldId': '106074',
+        'alias': 'UID'
     }
 ]
 
 if __name__ == '__main__':
+    result = client.request('post', '/v3/profile-fields/map', json={
+        'fieldId': '106074',
+        'alias': 'UID'
+    })
+    print(result)
     for alias in FIELDS:
         pass
         # result = client.request('post', '/v3/profile-fields/map', json=alias)
