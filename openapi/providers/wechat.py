@@ -35,7 +35,9 @@ class Client(BaseClient):
         if not token_request:
             if params is None:
                 params = {}
-            params['access_token'] = self.access_token
+
+            if 'access_token' not in params:
+                params['access_token'] = self.access_token
 
         request_url = f'{self.API_BASE_URL}{endpoint}'
         response = self._request(
@@ -52,7 +54,10 @@ class Client(BaseClient):
             return Result(data=result)
 
     def check_check_token(self, access_token):
-        result = self.request('get', '/get_api_domain_ip')
+        result = self.request(
+            'get', '/get_api_domain_ip',
+            params={'access_token': access_token}
+        )
         return result.code == self.codes.SUCCESS
 
     def fetch_access_token(self):
