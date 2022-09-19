@@ -6,7 +6,12 @@ print(config)
 client = Client(**config['wechat'])
 client.add_webhook(config['openapi_webhook'])
 
-# 发送文本消息
+# 网络检测
+result = client.request('post', '/callback/check', data={})
+print(result)
+print(result.errcode == client.codes.SUCCESS_CODE)
+
+# 发送模板消息
 result = client.request(
     'post', '/message/template/send',
     data={
