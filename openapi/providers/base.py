@@ -133,7 +133,7 @@ class BaseClient:
         except httpx.HTTPError:
             pass
 
-    def check_check_token(self, access_token):
+    def check_token(self, access_token):
         return True
 
     def refresh_access_token(self):
@@ -143,7 +143,7 @@ class BaseClient:
     def access_token(self):
         if not (
             self._token and self._token.is_valid
-            and self.check_check_token(self._token.access_token)
+            and self.check_token(self._token.access_token)
         ):
             self.fetch_access_token()
 

@@ -34,14 +34,22 @@ class Client(BaseClient):
         token_request=False
     ) -> Result:
         if not token_request:
-            if method == 'get':
+            if method == 'get' and 'access_token' not in params:
                 params['access_token'] = self.access_token
 
-            if method == 'post':
+            if method == 'post' and 'access_token' not in data:
                 data['access_token'] = self.access_token
+
         request_url = f'{self.API_BASE_URL}{endpoint}'
         response = self._request(method, request_url, params=params, json=data)
         return Result(**response.json()) if response else Result(code=self.codes.FAIL)
+
+    def check_token(self, access_token):
+        result = self.request(
+            'get', '/xe.user.tag.list/1.0.0',
+            data={'access_token': access_token, 'tag_type': 0, 'page': 1, 'page_size': 1}
+        )
+        return result.code == self.codes.SUCCESS
 
     def fetch_access_token(self):
         result: Result = self.request(

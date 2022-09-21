@@ -53,7 +53,7 @@ class Client(BaseClient):
         else:
             return Result(data=result)
 
-    def check_check_token(self, access_token):
+    def check_token(self, access_token):
         result = self.request(
             'get', '/get_api_domain_ip',
             params={'access_token': access_token}
