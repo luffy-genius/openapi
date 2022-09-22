@@ -34,10 +34,10 @@ class Client(BaseClient):
         token_request=False
     ) -> Result:
         if not token_request:
-            if method == 'get' and 'access_token' not in params:
+            if method == 'get' and params and 'access_token' not in params:
                 params['access_token'] = self.access_token
 
-            if method == 'post' and 'access_token' not in data:
+            if method == 'post' and data and 'access_token' not in data:
                 data['access_token'] = self.access_token
 
         request_url = f'{self.API_BASE_URL}{endpoint}'
