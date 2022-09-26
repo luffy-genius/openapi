@@ -46,7 +46,7 @@ class Client(BaseClient):
 
     def check_token(self, access_token):
         result = self.request(
-            'get', '/xe.user.batch.get/1.0.0',
+            'post', '/xe.user.batch.get/1.0.0',
             data={'access_token': access_token, 'page': 1, 'page_size': 1}
         )
         return result.code == self.codes.SUCCESS
