@@ -41,8 +41,8 @@ class Client(BaseClient):
     def request(
         self, method, endpoint,
         params: typing.Dict = None,
-        data: typing.Dict = None,
-        json: typing.Dict = None,
+        data: typing.Union[typing.Dict, typing.List] = None,
+        json: typing.Union[typing.Dict, typing.List] = None,
         headers: typing.Dict = None
     ):
         request_url = f'{self.API_BASE_URL}{self.API_VERSION}{endpoint}'

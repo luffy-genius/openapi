@@ -3,13 +3,19 @@ from openapi.providers.crm.tanmarket import Client
 
 from examples.config import config
 
-client = Client(**config['tanmarket'])
+tan_market_config = config['tanmarket']
+filepath = tan_market_config.pop('filepath')
+client = Client(**tan_market_config)
 client.add_webhook(config['openapi_webhook'])
 
 pprint.pprint(client.request('post', '/v3/profile-fields', json={}).data)
 
 # /v3/profile-fields/map
 FIELDS = [
+    {
+        'fieldId': '104220',
+        'alias': '姓名'
+    },
     {
         'fieldId': '105086',
         'alias': '下单时间'
@@ -57,11 +63,11 @@ FIELDS = [
 ]
 
 if __name__ == '__main__':
-    result = client.request('post', '/v3/profile-fields/map', json={
-        'fieldId': '106074',
-        'alias': 'UID'
-    })
-    print(result)
+    # result = client.request('post', '/v3/profile-fields/map', json={
+    #     'fieldId': '106074',
+    #     'alias': 'UID'
+    # })
+    # print(result)
     for alias in FIELDS:
         pass
         # result = client.request('post', '/v3/profile-fields/map', json=alias)

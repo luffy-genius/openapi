@@ -2,7 +2,9 @@ from openapi.providers.crm.tanmarket import Client
 
 from examples.config import config
 
-client = Client(**config['tanmarket'])
+tan_market_config = config['tanmarket']
+filepath = tan_market_config.pop('filepath')
+client = Client(**tan_market_config)
 client.add_webhook(config['openapi_webhook'])
 
 # For testing
@@ -16,7 +18,7 @@ result = client.request(
 
 if __name__ == '__main__':
     result = client.request('post', '/v3/add-clue', json={
-        'customerName': 'liuzhichao-test1',
+        'customerName': 'liuzhichao-test2',
         'mobiles': ['18803561681'],
         'fields': [
             {
@@ -27,10 +29,10 @@ if __name__ == '__main__':
                 'alias': '下单时间',
                 'fieldValue': '2022-09-14 21:01:00'
             },
-            {
-                'alias': '电话',
-                'fieldValue': '18803561681'
-            },
+            # {
+            #     'alias': '电话',
+            #     'fieldValue': ['18803561681']
+            # },
             {
                 'alias': '性别',
                 'fieldValue': 0

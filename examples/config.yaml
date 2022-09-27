@@ -36,3 +36,6 @@ doudian:
   app_id:
   secret:
   shop_id:
+
+feishu:
+  bot:
