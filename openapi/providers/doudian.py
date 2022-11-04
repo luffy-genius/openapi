@@ -94,6 +94,16 @@ class Client(BaseClient):
         if result.code == self.codes.SUCCESS:
             self._token = Token(**result.data)
 
+    def refresh_access_token(self):
+        result = self.request(
+            'post', '/token/create', data={
+                'refresh_token': self._token.refresh_token,
+                'grant_type': 'refresh_token',
+            }
+        )
+        if result.code == self.codes.SUCCESS:
+            self._token = Token(**result.data)
+
     def callback(self, app_id: str, sign: str, body: bytes) -> Optional[Dict]:
         data = body.decode('utf-8')
         if not data:
