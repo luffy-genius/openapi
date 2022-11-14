@@ -18,8 +18,8 @@ result = client.request(
 
 if __name__ == '__main__':
     result = client.request('post', '/v3/add-clue', json={
-        'customerName': 'liuzhichao-test2',
-        'mobiles': ['18803561681'],
+        'customerName': 'liuzhichao-test3',
+        'mobiles': ['18803561678'],
         'fields': [
             {
                 'alias': '首次报名课程',
@@ -60,7 +60,15 @@ if __name__ == '__main__':
             {
                 'alias': '描述',
                 'fieldValue': 'hhhh'
-            }
+            },
+            {
+                'alias': '已购课程',
+                'fieldValue': '测试课程'
+            },
+            {
+                'alias': '购课总金额',
+                'fieldValue': 0.12
+            },
         ]
     })
     print(result)

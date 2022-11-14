@@ -86,6 +86,7 @@ class BaseClient:
             is_error = True
             errmsg = str(exc)
         finally:
+            _data = data or json or {}
             format_data = {
                 'date': datetime.now().strftime('%Y-%m-%d %X'),
                 'method': method, 'endpoint': request_url,
@@ -96,12 +97,10 @@ class BaseClient:
                     mask_sensitive_data(params or {}), indent=2, ensure_ascii=False
                 ),
                 'data': _json.dumps(
-                    mask_sensitive_data(data or json or {}), indent=2, ensure_ascii=False
-                ),
-                'result': _json.dumps(
-                    response.json() if response else None,
+                    mask_sensitive_data(_data),
                     indent=2, ensure_ascii=False
-                ),
+                ) if isinstance(_data, dict) else _data,
+                'result': response.content,
                 'is_error': is_error, 'errmsg': errmsg
             }
             endpoint = request_url.replace(self.API_BASE_URL, '')

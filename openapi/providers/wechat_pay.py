@@ -52,7 +52,7 @@ class Client(BaseClient):
         request_url = f'{self.API_BASE_URL}{"/sandboxnew" if self.is_sandbox else ""}{endpoint}'
 
         if data:
-            data['app_id'] = self.app_id
+            data['appid'] = self.app_id
             data['mch_id'] = self.mch_id
 
             if 'nonce_str' not in data:
@@ -61,7 +61,7 @@ class Client(BaseClient):
             data['sign'] = calculate_signature(
                 data, self.debug_api_key if self.is_sandbox else self.api_key
             )
-
+        print(method, request_url, params, dict_to_xml(data).encode('utf-8'))
         response = self._request(
             method, request_url,
             params=params, data=dict_to_xml(data).encode('utf-8')

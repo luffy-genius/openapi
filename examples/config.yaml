@@ -39,3 +39,8 @@ doudian:
 
 feishu:
   bot:
+
+wechatpay:
+  app_id:
+  mch_id:
+  api_key_path:

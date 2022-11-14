@@ -4,7 +4,9 @@ from openapi.providers.crm.tanmarket import Client
 
 from examples.config import config
 
-client = Client(**config['tanmarket'])
+c = config['tanmarket']
+c.pop('filepath')
+client = Client(**c)
 client.add_webhook(config['openapi_webhook'])
 
 # print(client.request('post', '/v3/common/customer/info', json={
@@ -36,10 +38,13 @@ client.add_webhook(config['openapi_webhook'])
 # print(result)
 
 
-# result = client.request('post', '/v3/customer/list-customer-of-search', json={
-#     'searchKey': 15055353153
-# })
-# print(result)
+result = client.request('post', '/v3/customer/list-customer-of-search', json={
+    'searchKey': 19820879603
+})
+for item in result.data['data']:
+    # print(item.keys())
+    print(item.keys())
+    print(item)
 
 # Using
 # result = client.request('post', '/v3/common/customer/info', json={
