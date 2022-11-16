@@ -1,14 +1,23 @@
 import secrets
 import hashlib
-from typing import Dict
+from typing import Dict, Optional
 from pathlib import Path
 
+from openapi.enums import TextChoices
 from openapi.providers.base import BaseClient, BaseResult
 from openapi.utils import xml_to_dict, dict_to_xml
 
 
+class Code(TextChoices):
+    SUCCESS = 'SUCCESS', '成功'
+    FAIL = 'FAIL', '失败'
+
+
 class Result(BaseResult):
     return_code: str
+    return_msg: str
+    result_code: str
+    data: Optional[Dict]
 
 
 def calculate_signature(params, api_key, sign_type='MD5'):
@@ -38,6 +47,8 @@ class Client(BaseClient):
         self.api_key_path = api_key_path
         self.is_sandbox = is_sandbox
 
+        self.codes = Code
+
         with open(Path(api_key_path)) as fd:
             self.api_key = fd.read().replace('\r\n', '')
 
@@ -66,7 +77,15 @@ class Client(BaseClient):
             method, request_url,
             params=params, data=dict_to_xml(data).encode('utf-8')
         )
-        return xml_to_dict(response.content)
+        if response is None:
+            return Result(return_code=self.codes.FAIL)
+        result = xml_to_dict(response.content)
+        return Result(
+            return_msg=result['return_msg'],
+            return_code=result['return_code'],
+            result_code=result['result_code'],
+            data=result
+        )
 
     def fetch_access_token(self):
         pass
