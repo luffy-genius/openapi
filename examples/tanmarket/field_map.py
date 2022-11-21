@@ -8,7 +8,7 @@ filepath = tan_market_config.pop('filepath')
 client = Client(**tan_market_config)
 client.add_webhook(config['openapi_webhook'])
 
-# pprint.pprint(client.request('post', '/v3/profile-fields', json={}).data)
+pprint.pprint(client.request('post', '/v3/profile-fields', json={}).data)
 
 # /v3/profile-fields/map
 FIELDS = [
@@ -67,16 +67,18 @@ FIELDS = [
     {
         'fieldId': '109146',
         'alias': '购课总金额'
+    },
+    {
+        'fieldId': '105111',
+        'alias': '微信'
     }
 ]
 
 if __name__ == '__main__':
-    # result = client.request('post', '/v3/profile-fields/map', json={
-    #     'fieldId': '106074',
-    #     'alias': 'UID'
-    # })
-    # print(result)
+    result = client.request('post', '/v3/profile-fields/map', json=FIELDS[-1])
+    print(result)
     for alias in FIELDS[-2:]:
+        pass
         # print(alias)
-        result = client.request('post', '/v3/profile-fields/map', json=alias)
-        print(alias, result)
+        # result = client.request('post', '/v3/profile-fields/map', json=alias)
+        # print(alias, result)
