@@ -19,6 +19,10 @@ alipay:
   alipay_root_cert_path: './resources/alipayRootCert_test.crt'
   alipay_cert_public_key_path: './resources/alipayCertPublicKey_RSA2_test.crt'
 
+aliyun:
+  app_id:
+  secret:
+
 tanmarket:
   app_id:
   app_key:
@@ -46,3 +50,9 @@ wechatpay:
   app_id:
   mch_id:
   api_key_path:
+
+yizhi:
+  app_id:
+  secret:
+  decrypt_key:
+  decrypt_token:
