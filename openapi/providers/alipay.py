@@ -128,9 +128,9 @@ class Client(BaseClient):
         cert = OpenSSL.crypto.load_certificate(
             OpenSSL.crypto.FILETYPE_PEM, self.alipay_cert_public_key.encode('ascii')
         )
-        return OpenSSL.crypto.dump_publickey(
+        return RSA.importKey(OpenSSL.crypto.dump_publickey(
             OpenSSL.crypto.FILETYPE_PEM, cert.get_pubkey()
-        ).decode('utf-8')
+        ).decode())
 
     @property
     def app_cert_sn(self):
@@ -179,7 +179,7 @@ class Client(BaseClient):
             ((k, v if not isinstance(v, dict) else json.dumps(v, separators=(',', ':'))) for k, v in check_data.items())
         )
         message = '&'.join(u'{}={}'.format(k, v) for k, v in verify_data)
-        signer = PKCS1_v1_5.new(self.app_private_key)
+        signer = PKCS1_v1_5.new(self.alipay_public_key)
         digest = SHA256.new()
         digest.update(message.encode())
         return bool(signer.verify(digest, decodebytes(sign.encode())))
