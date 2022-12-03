@@ -38,13 +38,13 @@ client.add_webhook(config['openapi_webhook'])
 # print(result)
 
 
-result = client.request('post', '/v3/customer/list-customer-of-search', json={
-    'searchKey': 19820879603
-})
-for item in result.data['data']:
-    # print(item.keys())
-    print(item.keys())
-    print(item)
+# result = client.request('post', '/v3/customer/list-customer-of-search', json={
+#     'searchKey': 19820879603
+# })
+# for item in result.data['data']:
+#     # print(item.keys())
+#     print(item.keys())
+#     print(item)
 
 # Using
 # result = client.request('post', '/v3/common/customer/info', json={

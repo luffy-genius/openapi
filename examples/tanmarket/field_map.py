@@ -71,6 +71,10 @@ FIELDS = [
     {
         'fieldId': '105111',
         'alias': '微信'
+    },
+    {
+        'fieldId': '114038',
+        'alias': '新Py训练营'
     }
 ]
 

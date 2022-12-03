@@ -14,10 +14,10 @@ result = client.request(
     'post', f'/sheets/v2/spreadsheets/{feishu_open_config["table_id"]}/values_prepend',
     json={
         'valueRange': {
-            'range': '6qV6zA',
+            'range': '45BW2x!A2:T2',
             'values': [
                 [
-                    'string', 1, 'http://www.xx.com'
+                    'string', 10, 'http://www.xx.com', '1231313123', '123sflkadj'
                 ]
             ]
         }

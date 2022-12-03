@@ -1,9 +1,15 @@
+import base64
+import hashlib
+import socket
+import struct
 from typing import Optional
+from Crypto.Cipher import AES
 
 from openapi.exceptions import DisallowedHost
 
 from openapi.enums import IntegerChoices
 from openapi.providers.base import BaseClient, BaseResult, Token
+from openapi.utils import xml_to_dict
 
 
 class Code(IntegerChoices):
@@ -21,13 +27,20 @@ class Client(BaseClient):
     API_VERSION = ''
     API_BASE_URL = 'https://api.xiaoe-tech.com'
 
-    def __init__(self, app_id, secret, client_id=None):
+    def __init__(
+        self, app_id, secret,
+        client_id=None,
+        decrypt_key=None, decrypt_token=None
+    ):
         super().__init__()
         self.codes = Code
 
         self.app_id = app_id
         self.secret = secret
         self.client_id = client_id
+
+        self.decrypt_key = decrypt_key
+        self.decrypt_token = decrypt_token
 
     def request(
         self, method, endpoint, params=None, data=None,
@@ -66,3 +79,25 @@ class Client(BaseClient):
 
         if result.code == self.codes.INVALID_WHITE_LIST:
             raise DisallowedHost(result.msg)
+
+    def decrypt(self, encrypt, timestamp, nonce, signature):
+        data = [self.decrypt_token, timestamp, nonce, encrypt]
+        data.sort()
+
+        sign_aligo = hashlib.sha1()
+        sign_aligo.update(''.join(data).encode())
+        if signature != sign_aligo.hexdigest():
+            return Result(code=self.codes.FAIL, msg='签名不一致')
+
+        key = base64.b64decode(f'{self.decrypt_key}=')
+        crypter = AES.new(key, AES.MODE_CBC, key[:16])
+
+        plain_text = crypter.decrypt(base64.b64decode(encrypt))
+        pad = ord(plain_text[-1:])
+        content = plain_text[16:-pad]
+        xml_length = socket.ntohl((struct.unpack('I', content[:4]))[0])
+        xml_content = content[4:xml_length + 4]
+        return Result(
+            code=self.codes.SUCCESS, msg='OK',
+            data=xml_to_dict(f'<xml>{xml_content.decode()}</xml>')
+        )
