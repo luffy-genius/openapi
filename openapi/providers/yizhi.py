@@ -1,4 +1,10 @@
+import base64
+import hashlib
+import json
+import socket
+import struct
 from typing import Optional
+from Crypto.Cipher import AES
 
 from openapi.enums import IntegerChoices
 from openapi.providers.base import BaseClient, BaseResult, Token
@@ -56,5 +62,24 @@ class Client(BaseClient):
         if result.code == self.codes.SUCCESS:
             self._token = Token(**result.data)
 
-    def decrypt(self, encrypt, timestamp, nonce, msg_signature):
-        pass
+    def decrypt(self, encrypt, timestamp, nonce, signature):
+        data = [self.decrypt_token, timestamp, nonce, encrypt]
+        data.sort()
+
+        sign_aligo = hashlib.sha1()
+        sign_aligo.update(''.join(data).encode())
+        if signature != sign_aligo.hexdigest():
+            return Result(code=self.codes.FAIL, msg='签名不一致')
+
+        key = base64.b64decode(f'{self.decrypt_key}=')
+        crypter = AES.new(key, AES.MODE_CBC, key[:16])
+
+        plain_text = crypter.decrypt(base64.b64decode(encrypt))
+        pad = ord(plain_text[-1:])
+        content = plain_text[16:-pad]
+        json_length = socket.ntohl((struct.unpack('I', content[:4]))[0])
+        json_content = content[4:json_length + 4]
+        return Result(
+            code=self.codes.SUCCESS, msg='OK',
+            data=json.loads(json_content.decode())
+        )

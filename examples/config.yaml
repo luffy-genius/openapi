@@ -4,6 +4,8 @@ xiaoetong:
   app_id:
   secret:
   client_id:
+  decrypt_key:
+  decrypt_token:
 
 # For test, More: https://mp.weixin.qq.com/debug/cgi-bin/sandboxinfo?action=showinfo&t=sandbox/index
 wechat:
