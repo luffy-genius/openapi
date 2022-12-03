@@ -71,7 +71,7 @@ class Client(BaseClient):
             return Result(code=self.codes.FAIL)
 
         result = {inflection.underscore(k): v for k, v in response.json().items()}
-        return Result(**result)
+        return Result(**result, data=result)
 
     def fetch_access_token(self):
         pass
