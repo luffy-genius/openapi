@@ -1,4 +1,5 @@
 from typing import Optional
+from urllib.parse import quote
 
 from openapi.providers.base import BaseClient, BaseResult, Token
 from openapi.exceptions import DisallowedHost
@@ -74,3 +75,38 @@ class Client(BaseClient):
 
         if result.errcode == self.codes.INVALID_WHITE_LIST:
             raise DisallowedHost(result.errmsg)
+
+    def get_authorize_url(
+        self, scope='snsapi_base', state='',
+        redirect_uri=''
+    ):
+        redirect_uri = quote(redirect_uri, safe='')
+        url_list = [
+            'https://open.weixin.qq.com',
+            '/connect/oauth2/authorize?appid=',
+            self.app_id,
+            '&redirect_uri=',
+            redirect_uri,
+            '&response_type=code&scope=',
+            scope
+        ]
+        if state:
+            url_list.extend(['&state=', state])
+        url_list.append('#wechat_redirect')
+        return ''.join(url_list)
+
+    def get_qrcode_url(self, state='', redirect_uri=''):
+        redirect_uri = quote(redirect_uri, safe='')
+        url_list = [
+            'https://open.weixin.qq.com',
+            '/connect/qrconnect?appid=',
+            self.app_id,
+            '&redirect_uri=',
+            redirect_uri,
+            '&response_type=code&scope=',
+            'snsapi_login'  # scope
+        ]
+        if state:
+            url_list.extend(['&state=', state])
+        url_list.append('#wechat_redirect')
+        return ''.join(url_list)

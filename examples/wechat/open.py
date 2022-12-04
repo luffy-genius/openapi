@@ -1,4 +1,4 @@
-from openapi.providers.wechat import Client
+from openapi.providers.wechat.open import Client
 
 from examples.config import config
 
