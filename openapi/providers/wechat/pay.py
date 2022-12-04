@@ -1,5 +1,6 @@
 import secrets
 import hashlib
+import time
 from typing import Dict, Optional
 from pathlib import Path
 
@@ -16,7 +17,7 @@ class Code(TextChoices):
 class Result(BaseResult):
     return_code: str
     return_msg: str
-    result_code: str
+    result_code: Optional[str]
     data: Optional[Dict]
 
 
@@ -83,9 +84,24 @@ class Client(BaseClient):
         return Result(
             return_msg=result['return_msg'],
             return_code=result['return_code'],
-            result_code=result['result_code'],
+            result_code=result.get('result_code'),
             data=result
         )
+
+    def get_jsapi_data(self, prepay_id):
+        data = {
+            'appId': self.app_id,
+            'timeStamp': str(int(time.time())),
+            'nonceStr': secrets.token_hex(16),
+            'signType': 'MD5',
+            'package': f'prepay_id={prepay_id}'
+        }
+        sign = calculate_signature(
+            data,
+            self.api_key if not self.is_sandbox else self.debug_api_key
+        )
+        data['paySign'] = sign.upper()
+        return data
 
     def fetch_access_token(self):
         pass
