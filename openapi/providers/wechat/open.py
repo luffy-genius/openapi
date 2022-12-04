@@ -31,13 +31,13 @@ class Client(BaseClient):
 
     def request(
         self, method, endpoint, params=None, data=None,
-        token_request=False
+        token_request=False, include_token=True,
     ):
         if not token_request:
             if params is None:
                 params = {}
 
-            if 'access_token' not in params:
+            if 'access_token' not in params and include_token:
                 params['access_token'] = self.access_token
 
         request_url = f'{self.API_BASE_URL}{endpoint}'
