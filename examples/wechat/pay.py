@@ -28,7 +28,7 @@ print(result)
 
 data = {
     'body': '米诺地尔町',
-    'out_trade_no': '123211235',
+    'out_trade_no': '1232112359910',
     'total_fee': 1,
     'spbill_create_ip': '127.0.0.1',
     'notify_url': 'htt',
@@ -41,12 +41,12 @@ data = {
 # print(result)
 
 # 创建订单 -> mweb
-# data.update(trade_type='MWEB', out_trade_no='1231asd1')
+# data.update(trade_type='MWEB', out_trade_no='1231asd1222')
 # result = wxpay_api.request('post', '/pay/unifiedorder', data=data)
 # print(result)
 
 # 创建订单 -> jsapi
-data.update(trade_type='JSAPI', out_trade_no='21321asd123', openid='ofwIAuEgpTZZwdPc1aort93xOdU8')
+data.update(trade_type='JSAPI', out_trade_no='21321asd12311313', openid='ofwIAuEgpTZZwdPc1aort93xOdU8')
 result = wxpay_api.request('post', '/pay/unifiedorder', data=data)
 print(result)
 if result.result_code == wxpay_api.codes.SUCCESS:

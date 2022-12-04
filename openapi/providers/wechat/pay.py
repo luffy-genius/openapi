@@ -1,6 +1,7 @@
 import secrets
 import hashlib
 import time
+import typing
 from typing import Dict, Optional
 from pathlib import Path
 
@@ -102,6 +103,15 @@ class Client(BaseClient):
         )
         data['paySign'] = sign.upper()
         return data
+
+    def check_signature(self, data: typing.Dict) -> bool:
+        return data['sign'] == calculate_signature(
+            {
+                k: v for k, v in data.items()
+                if k not in ('sign',)
+            },
+            self.api_key if not self.is_sandbox else self.debug_api_key
+        )
 
     def fetch_access_token(self):
         pass
