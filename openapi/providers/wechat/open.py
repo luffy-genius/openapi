@@ -40,7 +40,12 @@ class Client(BaseClient):
             if 'access_token' not in params and include_token:
                 params['access_token'] = self.access_token
 
-        request_url = f'{self.API_BASE_URL}{endpoint}'
+        # Support wechat oauth login
+        api_base_url = self.API_BASE_URL
+        if not include_token:
+            api_base_url = self.API_BASE_URL.replace('/cgi-bin', '')
+
+        request_url = f'{api_base_url}{endpoint}'
         response = self._request(
             method, request_url,
             params=params, json=data
