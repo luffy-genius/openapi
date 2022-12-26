@@ -1,7 +1,14 @@
 name: pypi-publish
-uses: pypa/gh-action-pypi-publish@v1.6.4
 on: [push]
-with:
-  user: csrftoken
-  password: ${{ secrets.PYPI_PASSWORD }}
-  print_hash: true
+jobs:
+  build-package:
+    runs-on: ubuntu-latest
+    steps:
+      - run: python3 setup.py sdist
+  upload-pypi:
+    steps:
+      - uses: pypa/gh-action-pypi-publish@v1.6.4
+        with:
+          user: csrftoken
+          password: ${{ secrets.PYPI_PASSWORD }}
+          print_hash: true
