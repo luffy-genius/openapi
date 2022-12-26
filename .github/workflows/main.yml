@@ -1,0 +1,7 @@
+name: pypi-publish
+uses: pypa/gh-action-pypi-publish@v1.6.4
+on: [push]
+with:
+  user: csrftoken
+  password: ${{ secrets.PYPI_PASSWORD }}
+  print_hash: true
