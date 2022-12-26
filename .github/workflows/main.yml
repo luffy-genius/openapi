@@ -6,6 +6,7 @@ jobs:
     steps:
       - run: python3 setup.py sdist
   upload-pypi:
+    runs-on: ubuntu-latest
     steps:
       - uses: pypa/gh-action-pypi-publish@v1.6.4
         with:
