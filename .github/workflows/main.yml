@@ -1,5 +1,8 @@
 name: pypi-publish
-on: [push]
+on:
+  push:
+    tags:
+      - 'v*'
 jobs:
   upload-pypi:
     runs-on: ubuntu-latest
