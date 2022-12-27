@@ -1,15 +1,22 @@
 name: pypi-publish
 on: [push]
 jobs:
-  build-package:
-    runs-on: ubuntu-latest
-    steps:
-      - run: cd ..
-      - run: python3 setup.py sdist
   upload-pypi:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install -r requirements.txt
+      - name: Build package
+        run: python3 setup.py sdist
       - uses: pypa/gh-action-pypi-publish@v1.6.4
+      - name: Publish Package
         with:
           user: csrftoken
           password: ${{ secrets.PYPI_PASSWORD }}
