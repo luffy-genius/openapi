@@ -9,8 +9,8 @@ xiaoetong:
 
 # For test, More: https://mp.weixin.qq.com/debug/cgi-bin/sandboxinfo?action=showinfo&t=sandbox/index
 wechat:
-  app_id: wx3a1c383b011d8d1b
-  secret: 34a78aab09452547007e739b61d4c10a
+  app_id:
+  secret:
 
 alipay:
   app_id: 2016081500252288
