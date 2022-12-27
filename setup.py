@@ -17,15 +17,15 @@ def get_version(package):
 version = get_version('openapi')
 
 setup(
-    name='openapi',
+    name='openapipy',
     version=version,
     description='openapi tools',
     long_description='openapi tools',
     classifiers=[],
-    keywords='openapi',
-    author='ZhiChao Liu',
+    keywords='openapi,openapi-python,python-openapi,openapipy,pyopenapi',
+    author='ZhiChaoLiu',
     author_email='liuzhichao9527@gmail.com',
-    url='https://github.com/csrftoken',
+    url='https://github.com/luffy-genius/openapi',
     license='MIT',
     packages=find_packages(),
     include_package_data=True,

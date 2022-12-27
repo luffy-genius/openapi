@@ -1,0 +1,26 @@
+name: pypi-publish
+on:
+  push:
+    tags:
+      - 'v*'
+jobs:
+  upload-pypi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install -r requirements.txt
+      - name: Build package
+        run: python3 setup.py sdist
+      - name: Publish Package
+        uses: pypa/gh-action-pypi-publish@v1.6.4
+        with:
+          user: csrftoken
+          password: ${{ secrets.PYPI_PASSWORD }}
+          print_hash: true
