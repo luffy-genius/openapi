@@ -15,8 +15,8 @@ jobs:
           pip3 install -r requirements.txt
       - name: Build package
         run: python3 setup.py sdist
-      - uses: pypa/gh-action-pypi-publish@v1.6.4
       - name: Publish Package
+        uses: pypa/gh-action-pypi-publish@v1.6.4
         with:
           user: csrftoken
           password: ${{ secrets.PYPI_PASSWORD }}
