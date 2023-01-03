@@ -7,7 +7,7 @@
 ### 安装
 
 ```
-pip3 install git+https://github.com/luffy-genius/openapi.git@VERSION
+pip3 install openapipy
 ```
 
 ### 使用

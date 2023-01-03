@@ -5,6 +5,9 @@ import re
 import os
 from setuptools import setup, find_packages
 
+with open('README.md', 'r') as fd:
+    long_description = fd.read()
+
 
 def get_version(package):
     """
@@ -20,7 +23,8 @@ setup(
     name='openapipy',
     version=version,
     description='openapi tools',
-    long_description='openapi tools',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     classifiers=[],
     keywords='openapi,openapi-python,python-openapi,openapipy,pyopenapi',
     author='ZhiChaoLiu',
