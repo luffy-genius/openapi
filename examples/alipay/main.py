@@ -4,18 +4,18 @@ from openapi.providers.alipay import Client
 
 from examples.config import config
 
-print(config['alipay-prod'])
-client = Client(**config['alipay-prod'], is_sandbox=False)
+settings = config['alipay-test']
+client = Client(**settings, is_sandbox=False)
 client.add_webhook(config['openapi_webhook'])
 
 
 if __name__ == '__main__':
     # query
     params = client.build_query_params(client.build_params(
-        # 'alipay.data.bill.balance.query', data={}
+        'alipay.data.bill.balance.query', data={}
         # 'alipay.data.bill.balancehis.query', data={'biz_month': '2022-11'}
-        'alipay.data.dataservice.bill.downloadurl.query',
-        data={'bill_type': 'trade', 'bill_date': '2021-12'}
+        # 'alipay.data.dataservice.bill.downloadurl.query',
+        # data={'bill_type': 'trade', 'bill_date': '2021-12'}
     ))
     request_url = f'{client.API_BASE_URL}?{params}'
     response = httpx.get(request_url)
@@ -33,7 +33,7 @@ if __name__ == '__main__':
         return_url='http://47.94.172.250:9527/api/v1/pay/alipay/'
     ))
     pc_pay_url = f'{client.API_BASE_URL}?{pc_pay_params}'
-    # print(pc_pay_url)
+    print(pc_pay_url)
 
     # mobile-pay
     mobile_pay_params = client.build_query_params(client.build_params(
@@ -48,7 +48,7 @@ if __name__ == '__main__':
         return_url='http://47.94.172.250:9527/api/v1/pay/alipay/'
     ))
     mobile_pay_url = f'{client.API_BASE_URL}?{mobile_pay_params}'
-    print(mobile_pay_url)
+    # print(mobile_pay_url)
 
     # query
     # result = client.request(
