@@ -38,10 +38,10 @@ def calc_signature(params, secret):
 
 
 class Result(BaseResult):
-    log_id = Optional[str]
-    msg = Optional[str]
-    sub_code = Optional[str]
-    sub_msg = Optional[str]
+    log_id: Optional[str]
+    msg: Optional[str]
+    sub_code: Optional[str]
+    sub_msg: Optional[str]
 
 
 class Client(BaseClient):

@@ -4,7 +4,7 @@ from openapi.providers.alipay import Client
 
 from examples.config import config
 
-settings = config['alipay-test']
+settings = config['alipay-prod2']
 client = Client(**settings, is_sandbox=False)
 client.add_webhook(config['openapi_webhook'])
 
@@ -13,9 +13,9 @@ if __name__ == '__main__':
     # query
     params = client.build_query_params(client.build_params(
         'alipay.data.bill.balance.query', data={}
-        # 'alipay.data.bill.balancehis.query', data={'biz_month': '2022-11'}
+        # 'alipay.data.bill.balancehis.query', data={'biz_month': '2022-12'}
         # 'alipay.data.dataservice.bill.downloadurl.query',
-        # data={'bill_type': 'trade', 'bill_date': '2021-12'}
+        # data={'bill_type': 'trade', 'bill_date': '2022-12'}
     ))
     request_url = f'{client.API_BASE_URL}?{params}'
     response = httpx.get(request_url)
