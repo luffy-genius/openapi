@@ -31,7 +31,7 @@ setup(
     author_email='liuzhichao9527@gmail.com',
     url='https://github.com/luffy-genius/openapi',
     license='MIT',
-    packages=find_packages(),
+    packages=find_packages(exclude=('examples',)),
     include_package_data=True,
     zip_safe=True,
     install_requires=[
