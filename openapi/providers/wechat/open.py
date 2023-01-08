@@ -31,7 +31,7 @@ class Client(BaseClient):
 
     def request(
         self, method, endpoint, params=None, data=None,
-        token_request=False, is_oauth=False,
+        token_request=False, is_oauth=True,
     ):
         if not token_request:
             if params is None:
