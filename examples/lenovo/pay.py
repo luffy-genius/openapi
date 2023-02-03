@@ -9,8 +9,8 @@ from examples.config import config
 lenovo_pay_config = config['lenovopay']
 
 pay_data = {
-    'mchNo': '1231313212asdaa',
-    'payAmount': 100,
+    'mchNo': '1231313212asdaab',
+    'payAmount': 1,
     'goodsName': 'table',
     'goodsDec': '',
     'goodsCode': '1',

@@ -58,6 +58,8 @@ class Client(BaseClient):
         with open(private_key_path) as fp:
             self.private_key = RSA.importKey(fp.read())
 
+        self.public_key_path = public_key_path
+
     def request(self, endpoint: str, data: Dict, method: str = 'post') -> Result:
         public_params = {
             'mchId': self.mch_id,
@@ -76,3 +78,6 @@ class Client(BaseClient):
         request_url = f'{self.API_BASE_URL}{endpoint}'
         response = self._request(method, request_url, json=data)
         return Result(**response.json())
+
+    def fetch_access_token(self):
+        pass
