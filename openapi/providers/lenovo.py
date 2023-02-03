@@ -7,7 +7,7 @@ from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 from Crypto.Hash import SHA256
 
-from openapi.enums import IntegerChoices
+from openapi.enums import TextChoices
 from openapi.exceptions import NotFoundPath
 from openapi.providers.base import BaseClient, BaseResult
 
@@ -23,10 +23,10 @@ def format_params(data):
     return '&'.join([f'{k}={data[k]}' for k in sorted(data) if data[k] and k != 'sign'])
 
 
-class Code(IntegerChoices):
-    SUCCESS = 10000, 'OK'
-    SIGN_FAIL = 400, '签名错误'
-    FAIL = 500, '错误信息'
+class Code(TextChoices):
+    SUCCESS = '10000', 'OK'
+    SIGN_FAIL = '401', '签名错误'
+    FAIL = '500', '错误信息'
 
 
 class Result(BaseResult):
