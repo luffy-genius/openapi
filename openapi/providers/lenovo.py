@@ -2,7 +2,7 @@ import time
 import secrets
 from pathlib import Path
 from typing import Optional, Union, Dict
-from base64 import encodebytes
+from base64 import encodebytes, decodebytes
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 from Crypto.Hash import SHA256
@@ -12,6 +12,10 @@ from openapi.exceptions import NotFoundPath
 from openapi.providers.base import BaseClient, BaseResult
 
 
+def format_params(data):
+    return '&'.join([f'{k}={data[k]}' for k in sorted(data) if data[k] and k != 'sign'])
+
+
 def calculate_signature(unsigned_string, api_key):
     signer = PKCS1_v1_5.new(api_key)
     signature = signer.sign(SHA256.new(unsigned_string))
@@ -19,8 +23,13 @@ def calculate_signature(unsigned_string, api_key):
     return encodebytes(signature).decode('utf-8').replace('\n', '')
 
 
-def format_params(data):
-    return '&'.join([f'{k}={data[k]}' for k in sorted(data) if data[k] and k != 'sign'])
+def verify_signature(params, api_key, charset='utf-8'):
+    sign = params['sign']
+    string = format_params(params)
+    signer = PKCS1_v1_5.new(api_key)
+    digest = SHA256.new()
+    digest.update(string.encode(charset))
+    return signer.verify(digest, decodebytes(sign.encode(charset)))
 
 
 class Code(TextChoices):
@@ -46,19 +55,21 @@ class Client(BaseClient):
         self.mch_id = mch_id
         self.codes = Code
 
-        # public_key_path = Path(public_key_path)
-        # if not public_key_path.exists():
-        #     raise NotFoundPath(f'{public_key_path} not found')
+        public_key_path = Path(public_key_path)
+        if not public_key_path.exists():
+            raise NotFoundPath(f'{public_key_path} not found')
 
         private_key_path = Path(private_key_path)
         if not private_key_path.exists():
             raise NotFoundPath(f'{private_key_path} not found')
 
+        # 加载公钥
+        with open(public_key_path) as fp:
+            self.public_key = RSA.importKey(fp.read())
+
         # 加载私钥
         with open(private_key_path) as fp:
             self.private_key = RSA.importKey(fp.read())
-
-        self.public_key_path = public_key_path
 
     def request(self, endpoint: str, data: Dict, method: str = 'post') -> Result:
         public_params = {
