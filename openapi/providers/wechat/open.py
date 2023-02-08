@@ -2,7 +2,7 @@ from typing import Optional
 from urllib.parse import quote
 
 from openapi.providers.base import BaseClient, BaseResult, Token
-from openapi.exceptions import DisallowedHost
+from openapi.exceptions import DisallowedHost, OpenAPIException
 from openapi.enums import IntegerChoices
 
 
@@ -77,9 +77,11 @@ class Client(BaseClient):
         )
         if result.errcode == self.codes.SUCCESS:
             self._token = Token(**result.data)
-
-        if result.errcode == self.codes.INVALID_WHITE_LIST:
-            raise DisallowedHost(result.errmsg)
+        else:
+            if result.errcode == self.codes.INVALID_WHITE_LIST:
+                raise DisallowedHost(result.errmsg)
+            else:
+                raise OpenAPIException(result.code, result.errmsg)
 
     def get_authorize_url(
         self, scope='snsapi_base', state='',
