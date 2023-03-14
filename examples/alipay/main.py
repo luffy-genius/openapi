@@ -51,11 +51,11 @@ if __name__ == '__main__':
     # print(mobile_pay_url)
 
     # query
-    # result = client.request(
-    #     'get', 'alipay.trade.query',
-    #     params={
-    #         'out_trade_no': 'mobile123456',
-    #         # 'trade_no': ''
-    #     }
-    # )
-    # print(result)
+    result = client.request(
+        'get', 'alipay.trade.query',
+        params={
+            # 'out_trade_no': '2023021922001494131437680153',
+            'trade_no': '2023021922001494131437680153'
+        }
+    )
+    print(result)
