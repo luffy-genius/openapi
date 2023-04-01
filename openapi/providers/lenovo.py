@@ -90,5 +90,10 @@ class Client(BaseClient):
         response = self._request(method, request_url, json=data)
         return Result(**response.json())
 
+    def check_signature(self, data: Dict) -> bool:
+        data.setdefault('appId', self.app_id)
+        data.setdefault('mchId', self.app_id)
+        return bool(verify_signature(data, self.public_key))
+
     def fetch_access_token(self):
         pass

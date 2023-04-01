@@ -79,10 +79,12 @@ FIELDS = [
 ]
 
 if __name__ == '__main__':
-    result = client.request('post', '/v3/profile-fields/map', json=FIELDS[-1])
-    print(result)
-    for alias in FIELDS[-2:]:
-        pass
+    # result = client.request('post', '/v3/profile-fields/map', json=FIELDS[-1])
+    # print(result)
+    # for alias in FIELDS[-2:]:
+    #     pass
         # print(alias)
         # result = client.request('post', '/v3/profile-fields/map', json=alias)
         # print(alias, result)
+    result = client.request('post', '/v3/profile-fields', json={})
+    print(result)

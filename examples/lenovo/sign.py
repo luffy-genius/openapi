@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Date: 2023/2/6
-from openapi.providers.lenovo import Client, verify_signature
+from openapi.providers.lenovo import Client
 from examples.config import config
 
 lenovo_pay_config = config['lenovopay']
@@ -24,4 +24,4 @@ response = {
     'nonce': 'cjx48mj4vr'
 }
 
-print(verify_signature(response, client.public_key))
+print(client.check_signature(response))

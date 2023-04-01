@@ -3,15 +3,13 @@
 # Date: 2023/2/3
 
 import json
-from openapi.providers.lenovo import (
-    Client, calculate_signature, format_params,
-)
+from openapi.providers.lenovo import Client
 from examples.config import config
 
 lenovo_pay_config = config['lenovopay']
 
 pay_data = {
-    'mchNo': '1231313212asdaabbb',
+    'mchNo': '1231313212asabbb',
     'payAmount': 1,
     'goodsName': 'table',
     'goodsDec': '',
