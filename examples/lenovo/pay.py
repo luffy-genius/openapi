@@ -9,13 +9,13 @@ from examples.config import config
 lenovo_pay_config = config['lenovopay']
 
 pay_data = {
-    'mchNo': '1231313212asabbb',
+    'mchNo': '397120230402453989',
     'payAmount': 1,
     'goodsName': 'table',
     'goodsDec': '',
     'goodsCode': '1',
     'productCode': 'COLLECT_CODE',
-    'attach': json.dumps({'mobile': 1880561683}),
+    'attach': json.dumps({'mobile': 18803561683}),
     'payNotify': 'http://47.94.238.32:8000/api/v1/pay/lenovo/'
 }
 
