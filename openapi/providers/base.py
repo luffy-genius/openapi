@@ -100,7 +100,7 @@ class BaseClient:
                     mask_sensitive_data(_data),
                     indent=2, ensure_ascii=False
                 ) if isinstance(_data, dict) else _data,
-                'result': response.text if response else '',
+                'result': response.text if response is not None else '',
                 'is_error': is_error, 'errmsg': errmsg
             }
             endpoint = request_url.replace(self.API_BASE_URL, '')

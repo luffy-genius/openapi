@@ -18,7 +18,7 @@ if __name__ == '__main__':
         # data={'bill_type': 'trade', 'bill_date': '2023-02'}
     ))
     request_url = f'{client.API_BASE_URL}?{params}'
-    # print(request_url)
+    print(request_url)
     response = httpx.get(request_url)
     print(response.json())
     # pc-pay
@@ -34,7 +34,7 @@ if __name__ == '__main__':
         return_url='http://47.94.172.250:9527/api/v1/pay/alipay/'
     ))
     pc_pay_url = f'{client.API_BASE_URL}?{pc_pay_params}'
-    print(pc_pay_url)
+    # print(pc_pay_url)
 
     # mobile-pay
     mobile_pay_params = client.build_query_params(client.build_params(
@@ -56,7 +56,7 @@ if __name__ == '__main__':
         'get', 'alipay.trade.query',
         params={
             # 'out_trade_no': '2023021922001494131437680153',
-            'trade_no': '2023021922001494131437680153'
+            'trade_no': '2023040322001494481429840718'
         }
     )
     print(result)
