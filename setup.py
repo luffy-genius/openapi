@@ -5,7 +5,7 @@ import re
 import os
 from setuptools import setup, find_packages
 
-with open('README.md', 'r') as fd:
+with open('README.md', 'r', encoding='utf-8') as fd:
     long_description = fd.read()
 
 
