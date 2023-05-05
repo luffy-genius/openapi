@@ -31,7 +31,7 @@ class Client(BaseClient):
 
     def request(
         self, method, endpoint, params=None, data=None,
-        token_request=False, is_oauth=True,
+        token_request=False, is_oauth=True, replace_url=True,
     ):
         if not token_request:
             if params is None:
@@ -42,7 +42,7 @@ class Client(BaseClient):
 
         # Support wechat oauth login
         api_base_url = self.API_BASE_URL
-        if not is_oauth:
+        if not is_oauth and replace_url:
             api_base_url = self.API_BASE_URL.replace('/cgi-bin', '')
 
         request_url = f'{api_base_url}{endpoint}'

@@ -7,9 +7,9 @@ client = Client(**config['wechat'])
 client.add_webhook(config['openapi_webhook'])
 
 # 网络检测
-result = client.request('post', '/callback/check', data={})
-print(result)
-print(result.errcode == client.codes.SUCCESS_CODE)
+# result = client.request('post', '/callback/check', data={}, is_oauth=False)
+# print(result)
+# print(result.errcode == client.codes.SUCCESS)
 
 # 发送模板消息
 result = client.request(
@@ -25,7 +25,7 @@ result = client.request(
         },
         'url': None,
         'miniprogram': None
-    }
+    }, is_oauth=False, replace_url=False
 )
 print(result)
-print(result.errcode == client.codes.SUCCESS_CODE)
+print(result.errcode == client.codes.SUCCESS)
