@@ -79,7 +79,8 @@ class BaseClient:
         try:
             response = httpx.request(
                 method, request_url, headers=headers,
-                params=params, data=data, json=json
+                params=params, data=data, json=json,
+                timeout=httpx.Timeout(10)
             )
             is_error = response.is_error
         except httpx.HTTPError as exc:
