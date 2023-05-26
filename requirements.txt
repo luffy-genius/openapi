@@ -5,3 +5,4 @@ cryptography
 inflection
 pyOpenSSL==22.0.0
 twine
+ruff==0.0.270
