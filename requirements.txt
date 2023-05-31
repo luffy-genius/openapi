@@ -3,6 +3,6 @@ pydantic
 pycryptodome
 cryptography
 inflection
-pyOpenSSL==23.1.1
+pyOpenSSL==23.2.0
 twine
 ruff==0.0.270
