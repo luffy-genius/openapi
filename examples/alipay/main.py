@@ -13,9 +13,9 @@ if __name__ == '__main__':
     # query
     params = client.build_query_params(client.build_params(
         'alipay.data.bill.balance.query', data={},
-        # 'alipay.data.bill.balancehis.query', data={'biz_month': '2022-12'}
+        # 'alipay.data.bill.balancehis.query', data={'biz_month': '2023-05'}
         # 'alipay.data.dataservice.bill.downloadurl.query',
-        # data={'bill_type': 'trade', 'bill_date': '2023-02'}
+        # data={'bill_type': 'trade', 'bill_date': '2023-05'}
     ))
     request_url = f'{client.API_BASE_URL}?{params}'
     print(request_url)
@@ -26,8 +26,8 @@ if __name__ == '__main__':
         'alipay.trade.page.pay',
         {
             'subject': 'popmart-molly',
-            'out_trade_no': 'pc123456',
-            'total_amount': '999.99',
+            'out_trade_no': 'pc1234567',
+            'total_amount': '0.01',
             'product_code': 'FAST_INSTANT_TRADE_PAY'
         },
         notify_url='http://47.94.172.250:9527/api/v1/pay/alipay/',
@@ -42,14 +42,14 @@ if __name__ == '__main__':
         {
             'subject': 'popmart-molly',
             'out_trade_no': 'mobile1234567',
-            'total_amount': '999.99',
+            'total_amount': '0.01',
             'product_code': 'QUICK_WAP_WAY'
         },
         notify_url='http://47.94.172.250:9527/api/v1/pay/alipay/',
         return_url='http://47.94.172.250:9527/api/v1/pay/alipay/'
     ))
     mobile_pay_url = f'{client.API_BASE_URL}?{mobile_pay_params}'
-    # print(mobile_pay_url)
+    print(mobile_pay_url)
 
     # query
     result = client.request(

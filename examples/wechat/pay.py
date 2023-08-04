@@ -7,7 +7,7 @@ from openapi.providers.wechat.pay import Client
 
 from examples.config import config
 
-wechatpay_config = config['wechatpay']
+wechatpay_config = config['wechatpay2']
 
 wxpay_api = Client(
     app_id=wechatpay_config['app_id'],
@@ -37,8 +37,8 @@ data = {
 }
 
 # 创建订单 -> pc
-# result = wxpay_api.request('post', '/pay/unifiedorder', data=data)
-# print(result)
+result = wxpay_api.request('post', '/pay/unifiedorder', data=data)
+print(result)
 
 # 创建订单 -> mweb
 # data.update(trade_type='MWEB', out_trade_no='1231asd1222')
@@ -46,9 +46,9 @@ data = {
 # print(result)
 
 # 创建订单 -> jsapi
-data.update(trade_type='JSAPI', out_trade_no='21321asd12311313', openid='ofwIAuEgpTZZwdPc1aort93xOdU8')
-result = wxpay_api.request('post', '/pay/unifiedorder', data=data)
-print(result)
-if result.result_code == wxpay_api.codes.SUCCESS:
-    jsapi_data = wxpay_api.get_jsapi_data(result.data['prepay_id'])
-    print(jsapi_data)
+# data.update(trade_type='JSAPI', out_trade_no='21321asd12311313', openid='ofwIAuEgpTZZwdPc1aort93xOdU8')
+# result = wxpay_api.request('post', '/pay/unifiedorder', data=data)
+# print(result)
+# if result.result_code == wxpay_api.codes.SUCCESS:
+#     jsapi_data = wxpay_api.get_jsapi_data(result.data['prepay_id'])
+#     print(jsapi_data)
