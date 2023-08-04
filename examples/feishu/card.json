@@ -1,0 +1,24 @@
+{
+  "templateId": "ctp_AA6aqrJCwGwv",
+  "content": {
+    "config": {
+      "wide_screen_mode": true
+    },
+    "header": {
+      "template": "blue",
+      "title": {
+        "tag": "plain_text",
+        "content": "客户跟进提醒"
+      }
+    },
+    "elements": [
+      {
+        "tag": "markdown",
+        "content": "**手机号：**13935665890\n**金额：**39.9\n**购买商品名称：**路飞IT不报班自学卡【视频号】\n**支付时间：**2023-07-12 22:00:01",
+        "text_align": "left"
+      }
+    ]
+  },
+  "mock_data": "{}",
+  "variables": []
+}

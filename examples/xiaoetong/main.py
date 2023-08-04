@@ -13,8 +13,8 @@ data = {
     'nonce': '9419866818'
 }
 
-result = client.decrypt(**data)
-print(result)
+# result = client.decrypt(**data)
+# print(result)
 
 # invited_result = client.request(
 #     'post', '/xe.distributor.customer.get/1.0.0',
@@ -23,7 +23,8 @@ print(result)
 # print(invited_result)
 # 
 # 
-# client.request(
-#     'post', '/xe.order.detail/1.0.0',
-#     data={'order_id': 'o_1665481738_63453c0a983e0_95395219'}
-# )
+result = client.request(
+    'post', '/xe.order.detail/1.0.0',
+    data={'order_id': 'o_1686410201_648493d9340af_97265579'}
+)
+print(result)

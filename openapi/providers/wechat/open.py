@@ -19,7 +19,7 @@ class Result(BaseResult):
 
 
 class Client(BaseClient):
-    NAME = '微信服务号'
+    NAME = '微信服务号/视频号'
     API_BASE_URL = 'https://api.weixin.qq.com/cgi-bin'
     API_VERSION = ''
 
@@ -32,6 +32,7 @@ class Client(BaseClient):
     def request(
         self, method, endpoint, params=None, data=None,
         token_request=False, is_oauth=True, replace_url=True,
+        result_processor=None
     ):
         if not token_request:
             if params is None:
@@ -55,7 +56,7 @@ class Client(BaseClient):
 
         result = response.json()
         if 'errcode' in result:
-            return Result(**result)
+            return Result(**result) if result_processor is None else result_processor(**result)
         else:
             return Result(data=result)
 
