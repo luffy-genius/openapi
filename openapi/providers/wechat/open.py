@@ -1,9 +1,16 @@
-from typing import Optional
+import base64
+import hashlib
+import json
+import socket
+import struct
 from urllib.parse import quote
+from typing import Optional
+from Crypto.Cipher import AES
 
 from openapi.providers.base import BaseClient, BaseResult, Token
 from openapi.exceptions import DisallowedHost, OpenAPIException
 from openapi.enums import IntegerChoices
+from openapi.utils import xml_to_dict
 
 
 class Code(IntegerChoices):
@@ -23,11 +30,17 @@ class Client(BaseClient):
     API_BASE_URL = 'https://api.weixin.qq.com/cgi-bin'
     API_VERSION = ''
 
-    def __init__(self, app_id, secret):
+    def __init__(
+        self, app_id, secret,
+        decrypt_key=None, decrypt_token=None
+    ):
         super().__init__()
         self.app_id = app_id
         self.secret = secret
         self.codes = Code
+
+        self.decrypt_key = decrypt_key
+        self.decrypt_token = decrypt_token
 
     def request(
         self, method, endpoint, params=None, data=None,
@@ -118,3 +131,29 @@ class Client(BaseClient):
             url_list.extend(['&state=', state])
         url_list.append('#wechat_redirect')
         return ''.join(url_list)
+
+    def decrypt(self, encrypt, timestamp, nonce, signature):
+        data = [self.decrypt_token, timestamp, nonce, encrypt]
+        data.sort()
+
+        sign_aligo = hashlib.sha1()
+        sign_aligo.update(''.join(data).encode())
+        if signature != sign_aligo.hexdigest():
+            return Result(code=self.codes.FAIL, msg='签名不一致')
+
+        key = base64.b64decode(f'{self.decrypt_key}=')
+        crypter = AES.new(key, AES.MODE_CBC, key[:16])
+
+        plain_text = crypter.decrypt(base64.b64decode(encrypt))
+        pad = ord(plain_text[-1:])
+        content = plain_text[16:-pad]
+        length = socket.ntohl((struct.unpack('I', content[:4]))[0])
+        content = content[4:length + 4]
+        try:
+            data = json.loads(content.decode())
+            return Result(
+                code=self.codes.SUCCESS, message='OK',
+                data=data
+            )
+        except Exception as exc:
+            return Result(code=self.codes.FAIL, message=str(exc))
