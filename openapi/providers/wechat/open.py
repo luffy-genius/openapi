@@ -10,7 +10,6 @@ from Crypto.Cipher import AES
 from openapi.providers.base import BaseClient, BaseResult, Token
 from openapi.exceptions import DisallowedHost, OpenAPIException
 from openapi.enums import IntegerChoices
-from openapi.utils import xml_to_dict
 
 
 class Code(IntegerChoices):
