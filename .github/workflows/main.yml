@@ -19,7 +19,7 @@ jobs:
       - name: Build package
         run: python3 setup.py sdist
       - name: Publish Package
-        uses: pypa/gh-action-pypi-publish@v1.8.10
+        uses: pypa/gh-action-pypi-publish@v1.8.8
         with:
           user: csrftoken
           password: ${{ secrets.PYPI_PASSWORD }}
