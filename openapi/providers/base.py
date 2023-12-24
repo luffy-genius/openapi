@@ -1,10 +1,9 @@
 import json as _json
 import httpx
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, Union, List, Dict
 
 from pydantic import BaseModel, Field
-
 
 MESSAGE_TEMPLATE = """date: {date}
 method: {method}
@@ -43,12 +42,16 @@ def mask_sensitive_data(data):
 
 class Token(BaseModel):
     access_token: str
-    refresh_token: Optional[str]
     expires_in: int = 7200
+    refresh_token: Optional[str]
     created_at: datetime = Field(default_factory=datetime.now)
+    expires_at: Optional[datetime]
+    refresh_expires_at: Optional[datetime]
 
     @property
     def is_valid(self):
+        if self.expires_at is not None:
+            return datetime.now() < (self.expires_at - timedelta(minutes=20))
         return (datetime.now() - self.created_at).total_seconds() < (self.expires_in - self.expires_in * 0.3)
 
 
@@ -133,11 +136,22 @@ class BaseClient:
         except httpx.HTTPError:
             pass
 
-    def check_token(self, access_token):
+    def check_token(self, access_token=None):
         return True
 
     def refresh_access_token(self):
         pass
+
+    def make_token(self, access_token, refresh_token, expires_in=7200, expires_at: datetime = None):
+        if expires_at:
+            expires_in = (expires_at - datetime.now()).seconds
+
+        self._token = Token(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_in=expires_in,
+            expires_at=expires_at
+        )
 
     @property
     def access_token(self):
