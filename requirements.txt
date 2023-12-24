@@ -6,3 +6,4 @@ inflection
 pyOpenSSL==23.2.0
 twine
 ruff==0.1.9
+setuptools
