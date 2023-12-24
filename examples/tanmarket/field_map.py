@@ -79,15 +79,19 @@ FIELDS = [
     {
         'fieldId': '128220',
         'alias': 'Linux训练营'
+    },
+    {
+        'fieldId': '138623',
+        'alias': '大航海营期'
     }
 ]
 
 if __name__ == '__main__':
     result = client.request('post', '/v3/profile-fields/map', json=FIELDS[-1])
     print(result)
-    # for alias in FIELDS[-2:]:
-    #     print(alias)
-    #     result = client.request('post', '/v3/profile-fields/map', json=alias)
-    #     print(alias, result)
-    # result = client.request('post', '/v3/profile-fields', json={})
-    # print(result)
+    for alias in FIELDS[-1:]:
+        print(alias)
+        result = client.request('post', '/v3/profile-fields/map', json=alias)
+        print(alias, result)
+    result = client.request('post', '/v3/profile-fields', json={})
+    print(result)
