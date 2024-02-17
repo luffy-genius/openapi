@@ -3,7 +3,7 @@ pydantic==1.9.1
 pycryptodome
 cryptography
 inflection
-pyOpenSSL==23.2.0
+pyOpenSSL==23.3.0
 twine
 ruff==0.1.9
 setuptools
