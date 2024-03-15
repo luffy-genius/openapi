@@ -5,5 +5,5 @@ cryptography
 inflection
 pyOpenSSL==23.2.0
 twine
-ruff==0.1.9
+ruff==0.3.3
 setuptools
