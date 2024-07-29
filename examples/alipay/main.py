@@ -1,11 +1,13 @@
+import json
+
 import httpx
 
 from openapi.providers.alipay import Client
 
 from examples.config import config
 
-settings = config['alipay-prod2']
-client = Client(**settings, is_sandbox=False)
+settings = config['alipay-test']
+client = Client(**settings, is_sandbox=True)
 # client.add_webhook(config['openapi_webhook'])
 
 
@@ -18,23 +20,24 @@ if __name__ == '__main__':
         # data={'bill_type': 'trade', 'bill_date': '2023-05'}
     ))
     request_url = f'{client.API_BASE_URL}?{params}'
-    print(request_url)
-    response = httpx.get(request_url)
-    print(response.json())
+    # print(request_url)
+    # response = httpx.get(request_url)
+    # print(response.json())
     # pc-pay
     pc_pay_params = client.build_query_params(client.build_params(
         'alipay.trade.page.pay',
         {
             'subject': 'popmart-molly',
-            'out_trade_no': 'pc1234567',
-            'total_amount': '0.01',
-            'product_code': 'FAST_INSTANT_TRADE_PAY'
+            'out_trade_no': 'pc12345678',
+            'total_amount': '100',
+            'product_code': 'FAST_INSTANT_TRADE_PAY',
+            'extend_params': json.dumps({'hb_fq_seller_percent': '100'})
         },
         notify_url='http://47.94.172.250:9527/api/v1/pay/alipay/',
         return_url='http://47.94.172.250:9527/api/v1/pay/alipay/'
     ))
     pc_pay_url = f'{client.API_BASE_URL}?{pc_pay_params}'
-    # print(pc_pay_url)
+    print(pc_pay_url)
 
     # mobile-pay
     mobile_pay_params = client.build_query_params(client.build_params(
