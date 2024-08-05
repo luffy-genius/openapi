@@ -45,7 +45,8 @@ class Client(BaseClient):
         is_sandbox=False
     ):
         super().__init__()
-        self.API_BASE_URL = f'https://openapi.alipay{"dev" if is_sandbox else ""}.com/gateway.do'
+        if is_sandbox:
+            self.API_BASE_URL = 'https://openapi-sandbox.dl.alipaydev.com/gateway.do'
 
         self.codes = Code
         self.app_id = app_id
