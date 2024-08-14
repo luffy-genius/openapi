@@ -1,0 +1,167 @@
+{
+  "result": 1,
+  "msg": "success",
+  "error_msg": "",
+  "code": "1",
+  "data": {
+    "addressUpdateAuditInfo": {
+      "timeoutOfAudit": 0,
+      "auditTime": 0,
+      "auditStatus": 0
+    },
+    "orderBaseInfo": {
+      "discountFee": 0,
+      "buyerNick": "黑黑森林",
+      "payTime": 1722414864126,
+      "orderLabels": [],
+      "remark": "",
+      "remindShipmentSign": 0,
+      "oid": 2421300093168518,
+      "sellerOpenId": "f1875c15a9540dfc14bf57240ecc19ea",
+      "expressFee": 0,
+      "orderSellerRoleInfo": {
+        "roleId": 3684946753,
+        "roleName": "叫我大王啊",
+        "roleType": 2
+      },
+      "buyerImage": "http://p1.a.yximgs.com/uhead/AB/2022/12/28/07/BMjAyMjEyMjgwNzU0MjVfMTIwNTM3NDUxOF8yX2hkNzg0XzMzMA==_s.jpg",
+      "shopNewBuyer": true,
+      "payType": 1,
+      "multiplePiecesNo": 0,
+      "enableSplitDeliveryOrder": false,
+      "validPromiseShipmentTimeStamp": 0,
+      "privacyInfoAuthTime": 0,
+      "sellerNick": "路飞学城",
+      "disableDeliveryReasonCode": [],
+      "recvTime": 1723021599587,
+      "buyerOpenId": "f1875c15a9540dfc14bf57249e0d4e74",
+      "cpsType": 2,
+      "promiseTimeStampOfDelivery": 0,
+      "refundTime": 0,
+      "carrierType": 501,
+      "orderTaxInfo": {
+        "sellerBearAmount": 0,
+        "taxAmount": 0
+      },
+      "platformNewBuyer": false,
+      "riskCode": 0,
+      "updateTime": 1723626518962,
+      "theDayOfDeliverGoodsTime": 120,
+      "commentStatus": 0,
+      "sendTime": 1722416798536,
+      "tradeInPayAfterPromoAmount": 0,
+      "preSale": 0,
+      "privacyInfoAuthStatus": 0,
+      "coType": 0,
+      "createTime": 1722414838006,
+      "totalFee": 3990,
+      "allActivityType": [
+        1
+      ],
+      "sellerDelayPromiseTimeStamp": 0,
+      "payChannel": "WECHAT",
+      "remindShipmentTime": 0,
+      "activityType": 1,
+      "allowanceExpressFee": 0,
+      "carrierId": 139257659009,
+      "priorityDelivery": false,
+      "payChannelDiscount": 0,
+      "status": 70
+    },
+    "orderRefundList": [],
+    "orderAddress": {
+      "districtCode": 440303,
+      "town": "东门街道",
+      "city": "深圳市",
+      "townCode": 440303003,
+      "cityCode": 4403,
+      "provinceCode": 44,
+      "encryptedMobile": "$L+RK0vS4Rut6N/aKkQEBvMbNXun98O59RUfOzUY4m5o=$Ci1tZXJjaGFudC5vcGVuLnNlY3JldC5rZXkua3M2Njg3ODQ1NDUxODg4MTg3MzMSIAe0aRLWaoD2oiwk2nlKEKTEFt57VBksaQglbyt6sC9GGhIZX5P7cVJH1E/Mo1JoBpwd4GYiIB0oyFIXH8yL3SAiNabYwkFbhrzSxLl6whBL2GKVFXUPKAUwAQ==&Ci1tZXJjaGFudC5vcGVuLnNlY3JldC5rZXkua3M2Njg3ODQ1NDUxODg4MTg3MzMSMP17rjuOMBNrASUiXqunIyomj5MHedR1KJeJDCEB45RRxycMdnjx4CBvdTJLWsscyxoS84Ep+1oUdyK83WQgVLDRySNiIiCvotY9SUlIvsueix9Zzz+bnixOhoZzRRUq6i0+cQW90igFMAE=$1$$",
+      "encryptedConsignee": "#eLUfV/YgV/Yg#Ci1tZXJjaGFudC5vcGVuLnNlY3JldC5rZXkua3M2Njg3ODQ1NDUxODg4MTg3MzMSIC/B8sJje507i7Xz4K4DsNy/edqATmg6D9UaBTDwkxSNGhI6OrPpYccMWaKKB5WNYVDcgJMiIBPthwM5VeHf2pb/KgAsAmY6ulCQysZsPCB+WWl31aiwKAUwAQ==&Ci1tZXJjaGFudC5vcGVuLnNlY3JldC5rZXkua3M2Njg3ODQ1NDUxODg4MTg3MzMSMJ3b0sbvkChdv3uD/+l8kKDbndRrxz2YkLGLbnjuezMzPUwT3ssxjZDFYsFtYZkyxRoSbSjQJWPrl8eOyT19si3bYiXIIiDuWuEuyHpe5ThBiAANQpwrrs2cyqZ1bgE8NgL42hf6fCgFMAE=#1##",
+      "desensitiseConsignee": "韩**",
+      "encryptedAddress": "~vV0Zk2IQvA4kiUxKmBfWayfiUvOrdoCc7gkc5dY82NDK3bAH6sILlz932NDK~Ci1tZXJjaGFudC5vcGVuLnNlY3JldC5rZXkua3M2Njg3ODQ1NDUxODg4MTg3MzMSQDcRTwk0KngwHclcGI8yS51PLsWiR/7kQKEPMVEGebUFD2f43/aPe+CvDYRnVmMtqvc0OKLbZkUQc32DCWOF+FcaEtldSMUcqQcJbeu9FtRcCQELnyIgTwP7EICUVH48yQBEv7S00t2dKcnAvSl+2Nz8kloGsbAoBTAB&Ci1tZXJjaGFudC5vcGVuLnNlY3JldC5rZXkua3M2Njg3ODQ1NDUxODg4MTg3MzMSMMYaiZ9dzouyh0PR809gJKU2++J7uNDqJymf2TfFf+xShskeKcDnqh9HZQBONE1ptRoSbDZf3bypVLaTa6g0UYt32DsBIiDDt1gbOyZNgVNiqpyZt3W0X+Nqa8hYAVo/PYzywwURAygFMAE=~1~~",
+      "province": "广东省",
+      "district": "罗湖区",
+      "desensitiseMobile": "1********18",
+      "desensitiseAddress": "**中路缤纷时代家园**栋****"
+    },
+    "orderLogisticsInfo": [],
+    "orderItemInfo": {
+      "itemPicUrl": "https://u2-201.ecukwai.com/bs2/image-kwaishop-product/ITEM_IMAGE-3608795560-9cd916fc5afa43adb535b4285649652a.jpg",
+      "itemType": 1,
+      "discountFee": 0,
+      "originalPrice": 3990,
+      "itemTitle": "Python/Go/Java/Linux人工智能数据分析前端测试网络安全系列课程",
+      "orderItemId": 110100106327518,
+      "num": 1,
+      "itemExtra": {
+        "categoryInfo": {
+          "itemCid": 12727,
+          "categoryName": "IT职业/编程/计算机考试"
+        }
+      },
+      "serviceInfo": {
+        "serviceRule": "{\"refundRule\":\"4\",\"depositRule\":\"\",\"deliverGoodsIntervalTime\":0,\"saleFlag\":true,\"promiseDeliveryTime\":-1,\"theDayOfDeliverGoodsTime\":0,\"immediatelyOnOfflineFlag\":0,\"deliveryMethod\":\"\",\"supportVerification\":-1,\"certMerchantCode\":\"\",\"certExpireType\":0,\"certStartTime\":0,\"certEndTime\":0,\"certExpDays\":0,\"orderPurchaseLimitType\":3,\"minOrderCount\":1,\"maxOrderCount\":1,\"servicePromise\":{\"freshRotRefund\":false,\"brokenRefund\":false,\"allergyRefund\":false,\"crabRefund\":false},\"unavailableTimeRule\":{\"weeks\":[],\"holidays\":[],\"timeRanges\":[]},\"qualityInspection\":-1,\"customerInfoType\":\"\",\"customerCertificateTypeList\":[],\"priceProtectDays\":0,\"deliveryTimeMode\":\"spot\",\"mixPromiseDeliveryTime\":-1,\"mixPresaleDeliveryTime\":[],\"serviceProviderPolicy\":{\"minAge\":0,\"maxAge\":0,\"days\":0,\"times\":0}}",
+        "freight": false,
+        "freightProviderType": 0,
+        "firstOrderGuarantee": false,
+        "instantDelivery": 0,
+        "instantRefund": false,
+        "serviceRuleInfo": {
+          "refundRule": "4",
+          "depositRule": "",
+          "deliverGoodsIntervalTime": 0,
+          "theDayOfDeliverGoodsTime": 0,
+          "saleFlag": true,
+          "promiseDeliveryTime": -1,
+          "immediatelyOnOfflineFlag": 0,
+          "deliveryMethod": "",
+          "supportVerification": -1,
+          "certMerchantCode": "",
+          "certExpireType": 0,
+          "certStartTime": 0,
+          "certEndTime": 0,
+          "certExpDays": 0
+        },
+        "freightProviderTypeDesc": "",
+        "showInsuranceRefuseTag": false,
+        "insuranceRefuseReason": "",
+        "freightProviderExplainDesc": "",
+        "buyExpensiveCompensateInfo": {
+          "canDisplayTag": false
+        }
+      },
+      "goodStoreCode": 0,
+      "warehouseCode": "",
+      "itemId": 20897060322560,
+      "relItemId": 20897060322560,
+      "relSkuId": 0,
+      "price": 3990,
+      "itemLinkUrl": "https://app.kwaixiaodian.com/merchant/shop/detail?id=20897060322560&hyId=kwaishop&layoutType=4&promoteChannel=1&promoteId=3684946753",
+      "skuNick": "self001",
+      "skuDesc": "规格",
+      "goodsCode": "",
+      "skuId": 89217528485560
+    },
+    "orderDeliveryInfo": {
+      "deliveryNum": 1,
+      "enableAppendPackage": true,
+      "totalPackageNum": 0,
+      "maxPackageNum": 50,
+      "packageNum": 0
+    },
+    "orderFlag": {
+      "flag": [
+        "grey_flag_tag_order"
+      ]
+    },
+    "subOrderInfo": [],
+    "orderCpsInfo": {
+      "distributorName": "叫我大王啊",
+      "distributorId": 3684946753
+    }
+  },
+  "requestId": "723649481094130422",
+  "sub_msg": "",
+  "sub_code": "1"
+}
