@@ -1,5 +1,5 @@
 httpx
-pydantic==1.10.21
+pydantic==2.10.6
 pycryptodome
 cryptography
 inflection
