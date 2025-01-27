@@ -27,10 +27,10 @@ client.add_webhook(config['openapi_webhook'])
 # })
 # print(result)
 #
-# result = client.request('post', '/v3/customer/list-customer-of-search', json={
-#     'customerId': 496831983505792
-# })
-# print(result)
+result = client.request('post', '/v3/customer/search', json={
+    'searchKey': '18437626925'
+})
+print(result)
 
 # result = client.request('post', '/v3/common/user/info', json={
 #     'mobile': 18803561683
@@ -38,14 +38,14 @@ client.add_webhook(config['openapi_webhook'])
 # print(result)
 
 
-result = client.request('post', '/v3/customer/list-customer-of-search', json={
-    'searchKey': 18099050926
-})
-print(result)
-for item in result.data['data']:
-    # print(item.keys())
-    print(item.keys())
-    print(item)
+# result = client.request('post', '/v3/customer/list-customer-of-search', json={
+#     'searchKey': 18099050926
+# })
+# print(result)
+# for item in result.data['data']:
+#     # print(item.keys())
+#     print(item.keys())
+#     print(item)
 
 # Using
 # result = client.request('post', '/v3/common/customer/info', json={

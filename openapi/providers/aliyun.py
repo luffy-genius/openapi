@@ -36,6 +36,7 @@ class Client(BaseClient):
         self, method, prefix, action, version,
         params=None, data=None
     ):
+        method = method.upper()
         public_params = {
             'Action': action,
             'Version': version,
@@ -46,12 +47,12 @@ class Client(BaseClient):
             'AccessKeyId': self.app_id,
             'Format': 'JSON',
         }
-        if method == 'get':
+        if method == 'GET':
             params.update(**public_params)
         else:
             data.update(**public_params)
 
-        sorted_data = sorted((params if method == 'get' else data).items(), key=lambda item: item[0])
+        sorted_data = sorted((params if method == 'GET' else data).items(), key=lambda item: item[0])
         sign_string = ''
         for k, v in sorted_data:
             if not v:
@@ -61,7 +62,7 @@ class Client(BaseClient):
         secret = '{}&'.format(self.secret)
         hmb = hmac.new(
             secret.encode(),
-            ('GET&%2F&' + quote(sign_string[:-1], safe='~')).encode(), 'sha1'
+            (f'{method}&%2F&' + quote(sign_string[:-1], safe='~')).encode(), 'sha1'
         ).digest()
         signature = quote(base64.standard_b64encode(hmb).decode('ascii'), safe='~')
         query_string = f'{sign_string[:-1]}&Signature={signature}'
