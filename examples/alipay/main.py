@@ -4,8 +4,8 @@ from openapi.providers.alipay import Client
 
 from examples.config import config
 
-settings = config['alipay-prod2']
-client = Client(**settings, is_sandbox=False)
+settings = config['alipay-test']
+client = Client(**settings, is_sandbox=True)
 # client.add_webhook(config['openapi_webhook'])
 
 
