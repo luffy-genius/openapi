@@ -41,7 +41,7 @@ class Client(BaseClient):
         self.redirect_url = redirect_url
         self.codes = Code
 
-    def request(self, method, endpoint, action=None, params=None, data=None, token_request=False):
+    def request(self, method, endpoint, action=None, params=None, data=None, token_request=False, headers=None):
         if data is not None:
             public_params = {
                 'appId': self.app_id,
@@ -55,7 +55,7 @@ class Client(BaseClient):
                 data['accessToken'] = self.access_token
 
         request_url = f'{self.API_BASE_URL}{endpoint}'
-        response = self._request(method, request_url, params=params, json=data)
+        response = self._request(method, request_url, params=params, json=data, headers=headers)
         return Result(**response.json())
 
     def check_token(self, access_token=None):
