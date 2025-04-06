@@ -1,7 +1,7 @@
 import typing
 
-from openapi.providers.base import BaseClient, BaseResult, Token
 from openapi.enums import IntegerChoices
+from openapi.providers.base import BaseClient, BaseResult, Token
 
 
 class Code(IntegerChoices):

@@ -1,10 +1,11 @@
+import base64
+import hmac
 import time
 import uuid
-import hmac
-import base64
-import inflection
 from typing import Optional, Union
 from urllib.parse import quote
+
+import inflection
 
 from openapi.enums import TextChoices
 from openapi.providers.base import BaseClient, BaseResult
@@ -59,7 +60,7 @@ class Client(BaseClient):
                 continue
             sign_string += quote(k, safe='~') + "=" + quote(v, safe='~') + '&'
 
-        secret = '{}&'.format(self.secret)
+        secret = f'{self.secret}&'
         hmb = hmac.new(
             secret.encode(),
             (f'{method}&%2F&' + quote(sign_string[:-1], safe='~')).encode(), 'sha1'

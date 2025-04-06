@@ -1,16 +1,15 @@
-import json
 import hashlib
+import json
 import typing
-
-import OpenSSL
-from pathlib import Path
+from base64 import decodebytes, encodebytes
 from datetime import datetime
+from pathlib import Path
 from urllib.parse import quote_plus
 
-from base64 import encodebytes, decodebytes
+import OpenSSL
+from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
-from Crypto.Hash import SHA256
 
 from openapi.enums import IntegerChoices
 from openapi.exceptions import NotFoundPath
@@ -179,7 +178,7 @@ class Client(BaseClient):
         verify_data = sorted(
             ((k, v if not isinstance(v, dict) else json.dumps(v, separators=(',', ':'))) for k, v in check_data.items())
         )
-        message = '&'.join(u'{}={}'.format(k, v) for k, v in verify_data)
+        message = '&'.join(f'{k}={v}' for k, v in verify_data)
         signer = PKCS1_v1_5.new(self.alipay_public_key)
         digest = SHA256.new()
         digest.update(message.encode())

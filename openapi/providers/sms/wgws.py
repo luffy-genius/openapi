@@ -1,9 +1,9 @@
-import uuid
-import typing
 import datetime
+import typing
+import uuid
 
-from openapi.providers.base import BaseClient, BaseResult
 from openapi.enums import IntegerChoices
+from openapi.providers.base import BaseClient, BaseResult
 from openapi.utils import xml_to_dict
 
 

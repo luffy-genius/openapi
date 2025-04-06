@@ -1,15 +1,13 @@
 import json
-
-from typing import Optional, Dict
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.hashes import SHA256, MD5, Hash
-from cryptography.hazmat.primitives.hmac import HMAC
-
 from datetime import datetime
+from typing import Dict, Optional
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.hashes import MD5, SHA256, Hash
+from cryptography.hazmat.primitives.hmac import HMAC
 
 from openapi.enums import IntegerChoices
 from openapi.providers.base import BaseClient, BaseResult, Token
-
 
 SIGN_FIELDS = [
     'app_key', 'method', 'param_json', 'timestamp', 'v'
@@ -23,7 +21,7 @@ class Code(IntegerChoices):
 
 def format_params(params, secret=None):
     data = [
-        '{0}{1}'.format(k, params[k])
+        f'{k}{params[k]}'
         for k in params if k in SIGN_FIELDS
     ]
     return f"{secret}{''.join(sorted(data))}{secret}"
@@ -116,7 +114,7 @@ class Client(BaseClient):
             return
 
         h = Hash(algorithm=MD5(), backend=default_backend())
-        h.update(f'{app_id}{data}{self.secret}'.encode('utf-8'))
+        h.update(f'{app_id}{data}{self.secret}'.encode())
         if h.finalize().hex() != sign:
             return
 

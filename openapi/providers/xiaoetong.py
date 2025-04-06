@@ -3,11 +3,11 @@ import hashlib
 import socket
 import struct
 from typing import Optional
+
 from Crypto.Cipher import AES
 
-from openapi.exceptions import DisallowedHost
-
 from openapi.enums import IntegerChoices
+from openapi.exceptions import DisallowedHost
 from openapi.providers.base import BaseClient, BaseResult, Token
 from openapi.utils import xml_to_dict
 

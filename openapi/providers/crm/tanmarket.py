@@ -1,9 +1,9 @@
+import hashlib
 import time
 import typing
-import hashlib
 
-from openapi.providers.base import BaseClient, BaseResult
 from openapi.enums import IntegerChoices
+from openapi.providers.base import BaseClient, BaseResult
 from openapi.utils import encode_json
 
 

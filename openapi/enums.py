@@ -61,8 +61,7 @@ class Choices(enum.Enum, metaclass=ChoicesMeta):
     """Class for creating enumerated choices."""
 
     def __str__(self):
-        """
-        Use value when cast to str, so that Choices set as model instance
+        """Use value when cast to str, so that Choices set as model instance
         attributes are rendered as expected in templates and similar contexts.
         """
         return str(self.value)
@@ -70,11 +69,12 @@ class Choices(enum.Enum, metaclass=ChoicesMeta):
 
 class IntegerChoices(int, Choices):
     """Class for creating enumerated integer choices."""
+
     pass
 
 
 class TextChoices(str, Choices):
     """Class for creating enumerated string choices."""
 
-    def _generate_next_value_(name, start, count, last_values):
-        return name
+    def _generate_next_value_(self, start, count, last_values):
+        return self

@@ -1,6 +1,5 @@
-from typing import Any
 from json import dumps as json_dumps
-
+from typing import Any
 from xml.etree import ElementTree as EleTree
 
 
@@ -11,9 +10,9 @@ def dict_to_xml(data):
             continue
 
         if str(v).isdigit():
-            xml_list.append('<{0}>{1}</{0}>'.format(k, v))
+            xml_list.append(f'<{k}>{v}</{k}>')
         else:
-            xml_list.append('<{0}><![CDATA[{1}]]></{0}>'.format(k, v))
+            xml_list.append(f'<{k}><![CDATA[{v}]]></{k}>')
     xml_list.append('</xml>')
     return ''.join(xml_list)
 

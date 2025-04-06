@@ -1,8 +1,8 @@
 import json as _json
-import httpx
 from datetime import datetime, timedelta
-from typing import Optional, Union, List, Dict
+from typing import Dict, List, Optional, Union
 
+import httpx
 from pydantic import BaseModel, Field
 
 MESSAGE_TEMPLATE = """date: {date}

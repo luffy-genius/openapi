@@ -1,13 +1,13 @@
-import secrets
 import hashlib
+import secrets
 import time
 import typing
-from typing import Dict, Optional
 from pathlib import Path
+from typing import Dict, Optional
 
 from openapi.enums import TextChoices
 from openapi.providers.base import BaseClient, BaseResult
-from openapi.utils import xml_to_dict, dict_to_xml
+from openapi.utils import dict_to_xml, xml_to_dict
 
 
 class Code(TextChoices):
@@ -30,7 +30,7 @@ def calculate_signature(params, api_key, sign_type='MD5'):
 
     data = [f'{k}={params[k]}' for k in sorted(params) if params[k]]
     if api_key:
-        data.append('key={0}'.format(api_key))
+        data.append(f'key={api_key}')
     h.update(bytes('&'.join(data), encoding='utf-8'))
     return h.hexdigest().upper()
 

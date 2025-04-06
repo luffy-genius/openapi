@@ -1,6 +1,7 @@
 import datetime
 import time
 from typing import Optional
+
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.hashes import MD5, Hash
 
@@ -11,7 +12,7 @@ from openapi.providers.base import BaseClient, BaseResult, Token
 def calculate_signature(params, api_key):
     data = f'appId={params["appId"]}&timestamp={params["timestamp"]}&version={params["version"]}'
     h = Hash(algorithm=MD5(), backend=default_backend())
-    h.update(f'{params["method"]}?{data}{api_key}'.encode('utf-8'))
+    h.update(f'{params["method"]}?{data}{api_key}'.encode())
     return h.finalize().hex()
 
 

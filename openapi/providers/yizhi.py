@@ -4,6 +4,7 @@ import json
 import socket
 import struct
 from typing import Optional
+
 from Crypto.Cipher import AES
 
 from openapi.enums import IntegerChoices

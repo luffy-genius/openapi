@@ -3,13 +3,14 @@ import hashlib
 import json
 import socket
 import struct
-from urllib.parse import quote
 from typing import Optional
+from urllib.parse import quote
+
 from Crypto.Cipher import AES
 
-from openapi.providers.base import BaseClient, BaseResult, Token
-from openapi.exceptions import DisallowedHost, OpenAPIException
 from openapi.enums import IntegerChoices
+from openapi.exceptions import DisallowedHost, OpenAPIException
+from openapi.providers.base import BaseClient, BaseResult, Token
 
 
 class Code(IntegerChoices):
