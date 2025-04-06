@@ -3,13 +3,14 @@ import hashlib
 import json
 import socket
 import struct
-from urllib.parse import quote
 from typing import Optional
+from urllib.parse import quote
+
 from Crypto.Cipher import AES
 
-from openapi.providers.base import BaseClient, BaseResult, Token
-from openapi.exceptions import DisallowedHost, OpenAPIException
 from openapi.enums import IntegerChoices
+from openapi.exceptions import DisallowedHost, OpenAPIException
+from openapi.providers.base import BaseClient, BaseResult, Token
 
 
 class Code(IntegerChoices):
@@ -29,10 +30,7 @@ class Client(BaseClient):
     API_BASE_URL = 'https://api.weixin.qq.com/cgi-bin'
     API_VERSION = ''
 
-    def __init__(
-        self, app_id, secret,
-        decrypt_key=None, decrypt_token=None
-    ):
+    def __init__(self, app_id, secret, decrypt_key=None, decrypt_token=None):
         super().__init__()
         self.app_id = app_id
         self.secret = secret
@@ -42,9 +40,15 @@ class Client(BaseClient):
         self.decrypt_token = decrypt_token
 
     def request(
-        self, method, endpoint, params=None, data=None,
-        token_request=False, is_oauth=True, replace_url=True,
-        result_processor=None
+        self,
+        method,
+        endpoint,
+        params=None,
+        data=None,
+        token_request=False,
+        is_oauth=True,
+        replace_url=True,
+        result_processor=None,
     ):
         if not token_request:
             if params is None:
@@ -59,10 +63,7 @@ class Client(BaseClient):
             api_base_url = self.API_BASE_URL.replace('/cgi-bin', '')
 
         request_url = f'{api_base_url}{endpoint}'
-        response = self._request(
-            method, request_url,
-            params=params, json=data
-        )
+        response = self._request(method, request_url, params=params, json=data)
         if response is None:
             return Result(code=self.codes.FAIL)
 
@@ -73,20 +74,15 @@ class Client(BaseClient):
             return Result(data=result)
 
     def check_token(self, access_token):
-        result = self.request(
-            'get', '/get_api_domain_ip',
-            params={'access_token': access_token}
-        )
+        result = self.request('get', '/get_api_domain_ip', params={'access_token': access_token})
         return result.code == self.codes.SUCCESS
 
     def fetch_access_token(self):
         result = self.request(
-            'get', '/token', params={
-                'grant_type': 'client_credential',
-                'appid': self.app_id,
-                'secret': self.secret
-            },
-            token_request=True
+            'get',
+            '/token',
+            params={'grant_type': 'client_credential', 'appid': self.app_id, 'secret': self.secret},
+            token_request=True,
         )
         if result.errcode == self.codes.SUCCESS:
             self._token = Token(**result.data)
@@ -96,10 +92,7 @@ class Client(BaseClient):
             else:
                 raise OpenAPIException(result.code, result.errmsg)
 
-    def get_authorize_url(
-        self, scope='snsapi_base', state='',
-        redirect_uri=''
-    ):
+    def get_authorize_url(self, scope='snsapi_base', state='', redirect_uri=''):
         redirect_uri = quote(redirect_uri, safe='')
         url_list = [
             'https://open.weixin.qq.com',
@@ -108,7 +101,7 @@ class Client(BaseClient):
             '&redirect_uri=',
             redirect_uri,
             '&response_type=code&scope=',
-            scope
+            scope,
         ]
         if state:
             url_list.extend(['&state=', state])
@@ -124,7 +117,7 @@ class Client(BaseClient):
             '&redirect_uri=',
             redirect_uri,
             '&response_type=code&scope=',
-            'snsapi_login'  # scope
+            'snsapi_login',  # scope
         ]
         if state:
             url_list.extend(['&state=', state])
@@ -147,12 +140,9 @@ class Client(BaseClient):
         pad = ord(plain_text[-1:])
         content = plain_text[16:-pad]
         length = socket.ntohl((struct.unpack('I', content[:4]))[0])
-        content = content[4:length + 4]
+        content = content[4 : length + 4]
         try:
             data = json.loads(content.decode())
-            return Result(
-                code=self.codes.SUCCESS, message='OK',
-                data=data
-            )
+            return Result(code=self.codes.SUCCESS, message='OK', data=data)
         except Exception as exc:
             return Result(code=self.codes.FAIL, message=str(exc))

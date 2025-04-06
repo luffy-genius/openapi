@@ -1,13 +1,13 @@
-import secrets
 import hashlib
+import secrets
 import time
 import typing
-from typing import Dict, Optional
 from pathlib import Path
+from typing import Dict, Optional
 
 from openapi.enums import TextChoices
 from openapi.providers.base import BaseClient, BaseResult
-from openapi.utils import xml_to_dict, dict_to_xml
+from openapi.utils import dict_to_xml, xml_to_dict
 
 
 class Code(TextChoices):
@@ -30,7 +30,7 @@ def calculate_signature(params, api_key, sign_type='MD5'):
 
     data = [f'{k}={params[k]}' for k in sorted(params) if params[k]]
     if api_key:
-        data.append('key={0}'.format(api_key))
+        data.append(f'key={api_key}')
     h.update(bytes('&'.join(data), encoding='utf-8'))
     return h.hexdigest().upper()
 
@@ -40,9 +40,7 @@ class Client(BaseClient):
     API_BASE_URL = 'https://api.mch.weixin.qq.com'
     API_VERSION = ''
 
-    def __init__(
-        self, app_id, mch_id, api_key_path, is_sandbox
-    ):
+    def __init__(self, app_id, mch_id, api_key_path, is_sandbox):
         super().__init__()
         self.app_id = app_id
         self.mch_id = mch_id
@@ -58,10 +56,7 @@ class Client(BaseClient):
     def debug_api_key(self):
         return ''
 
-    def request(
-        self, method: str, endpoint: str,
-        params: Dict = None, data: Dict = None
-    ):
+    def request(self, method: str, endpoint: str, params: Dict = None, data: Dict = None):
         request_url = f'{self.API_BASE_URL}{"/sandboxnew" if self.is_sandbox else ""}{endpoint}'
 
         if data:
@@ -71,14 +66,9 @@ class Client(BaseClient):
             if 'nonce_str' not in data:
                 data['nonce_str'] = secrets.token_hex(16)
 
-            data['sign'] = calculate_signature(
-                data, self.debug_api_key if self.is_sandbox else self.api_key
-            )
+            data['sign'] = calculate_signature(data, self.debug_api_key if self.is_sandbox else self.api_key)
 
-        response = self._request(
-            method, request_url,
-            params=params, data=dict_to_xml(data).encode('utf-8')
-        )
+        response = self._request(method, request_url, params=params, data=dict_to_xml(data).encode('utf-8'))
         if response is None:
             return Result(return_code=self.codes.FAIL)
         result = xml_to_dict(response.content)
@@ -86,7 +76,7 @@ class Client(BaseClient):
             return_msg=result['return_msg'],
             return_code=result['return_code'],
             result_code=result.get('result_code'),
-            data=result
+            data=result,
         )
 
     def get_jsapi_data(self, prepay_id):
@@ -95,22 +85,16 @@ class Client(BaseClient):
             'timeStamp': str(int(time.time())),
             'nonceStr': secrets.token_hex(16),
             'signType': 'MD5',
-            'package': f'prepay_id={prepay_id}'
+            'package': f'prepay_id={prepay_id}',
         }
-        sign = calculate_signature(
-            data,
-            self.api_key if not self.is_sandbox else self.debug_api_key
-        )
+        sign = calculate_signature(data, self.api_key if not self.is_sandbox else self.debug_api_key)
         data['paySign'] = sign.upper()
         return data
 
     def check_signature(self, data: typing.Dict) -> bool:
         return data['sign'] == calculate_signature(
-            {
-                k: v for k, v in data.items()
-                if k not in ('sign',)
-            },
-            self.api_key if not self.is_sandbox else self.debug_api_key
+            {k: v for k, v in data.items() if k not in ('sign',)},
+            self.api_key if not self.is_sandbox else self.debug_api_key,
         )
 
     def fetch_access_token(self):

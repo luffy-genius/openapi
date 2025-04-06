@@ -1,11 +1,12 @@
-import time
 import secrets
+import time
+from base64 import decodebytes, encodebytes
 from pathlib import Path
-from typing import Optional, Union, Dict
-from base64 import encodebytes, decodebytes
+from typing import Dict, Optional, Union
+
+from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
-from Crypto.Hash import SHA256
 
 from openapi.enums import TextChoices
 from openapi.exceptions import NotFoundPath
@@ -78,14 +79,11 @@ class Client(BaseClient):
             'nonce': secrets.token_hex(16),
             'timestamp': str(int(time.time() * 1000)),
             'version': self.VERSION,
-            'signType': 'RSA2'
+            'signType': 'RSA2',
         }
         data.update(**public_params)
 
-        data['sign'] = calculate_signature(
-            format_params(data).encode(),
-            self.private_key
-        )
+        data['sign'] = calculate_signature(format_params(data).encode(), self.private_key)
         request_url = f'{self.API_BASE_URL}{endpoint}'
         response = self._request(method, request_url, json=data)
         return Result(**response.json())

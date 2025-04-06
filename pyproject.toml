@@ -1,7 +1,18 @@
 [tool.ruff]
-ignore = ["E721"]
-# Same as Black.
 line-length = 120
+fix = true
+lint.select = [
+    "F",   # pyflakes（基础语法错误）
+    "E",   # pycodestyle（缩进、空格等）
+    "I",   # isort（导入顺序）
+    "B",   # bugbear（潜在错误）
+    "N",   # pep8-naming（命名规范）
+    "TID", # flake8-tidy-imports
+#    "W",   # 警告类检查
+#    "UP",  # pyupgrade（语法现代化）
+#    "D",   # pydocstyle（文档规范）
+]
+lint.ignore = ["E721", "N818"]
 # Exclude a variety of commonly ignored directories.
 exclude = [
     ".bzr",
@@ -28,3 +39,8 @@ exclude = [
     ".github",
     "examples"
 ]
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+line-ending = "lf"

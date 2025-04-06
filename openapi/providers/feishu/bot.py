@@ -1,7 +1,7 @@
 import typing
 
-from openapi.providers.base import BaseClient, BaseResult
 from openapi.enums import IntegerChoices
+from openapi.providers.base import BaseClient, BaseResult
 
 
 class Code(IntegerChoices):
@@ -27,7 +27,9 @@ class Client(BaseClient):
         pass
 
     def request(
-        self, method, endpoint,
+        self,
+        method,
+        endpoint,
         json: typing.Union[typing.Dict, typing.List] = None,
     ):
         request_url = f'{self.API_BASE_URL}{self.API_VERSION}{endpoint}'

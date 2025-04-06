@@ -1,9 +1,9 @@
+import hashlib
 import time
 import typing
-import hashlib
 
-from openapi.providers.base import BaseClient, BaseResult
 from openapi.enums import IntegerChoices
+from openapi.providers.base import BaseClient, BaseResult
 from openapi.utils import encode_json
 
 
@@ -39,11 +39,13 @@ class Client(BaseClient):
         pass
 
     def request(
-        self, method, endpoint,
+        self,
+        method,
+        endpoint,
         params: typing.Dict = None,
         data: typing.Union[typing.Dict, typing.List] = None,
         json: typing.Union[typing.Dict, typing.List] = None,
-        headers: typing.Dict = None
+        headers: typing.Dict = None,
     ):
         request_url = f'{self.API_BASE_URL}{self.API_VERSION}{endpoint}'
         if headers is None:
@@ -51,10 +53,6 @@ class Client(BaseClient):
 
         timestamp = f'{int(time.time() * 1000)}'
         string = f'{self.app_id}{timestamp}{encode_json(data or json)}{self.app_key}'
-        headers.update(**{
-            'appId': self.app_id,
-            'timestamp': timestamp,
-            'sign': calc_signature(string)
-        })
+        headers.update(**{'appId': self.app_id, 'timestamp': timestamp, 'sign': calc_signature(string)})
         response = self._request(method, request_url, params, data, json, headers)
         return Result(**(response.json() if response else {'code': self.codes.FAIL}))

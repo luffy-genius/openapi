@@ -1,6 +1,7 @@
 import datetime
 import time
 from typing import Optional
+
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.hashes import MD5, Hash
 
@@ -11,7 +12,7 @@ from openapi.providers.base import BaseClient, BaseResult, Token
 def calculate_signature(params, api_key):
     data = f'appId={params["appId"]}&timestamp={params["timestamp"]}&version={params["version"]}'
     h = Hash(algorithm=MD5(), backend=default_backend())
-    h.update(f'{params["method"]}?{data}{api_key}'.encode('utf-8'))
+    h.update(f'{params["method"]}?{data}{api_key}'.encode())
     return h.finalize().hex()
 
 
@@ -47,7 +48,7 @@ class Client(BaseClient):
                 'appId': self.app_id,
                 'version': self.API_VERSION,
                 'timestamp': str(int(time.time() * 1000)),
-                'method': action
+                'method': action,
             }
             public_params['sign'] = calculate_signature(public_params, self.secret)
             data.update(**public_params)
@@ -63,12 +64,15 @@ class Client(BaseClient):
 
     def fetch_access_token(self):
         code_result = self.request(
-            'get', '/api/edith/openapi/getcode',
+            'get',
+            '/api/edith/openapi/getcode',
             params={
-                'appId': self.app_id, 'userId': self.user_id,
-                'sellerId': self.seller_id, 'subsystemAlias': 'ark',
-                'redirectUrl': self.redirect_url
-            }
+                'appId': self.app_id,
+                'userId': self.user_id,
+                'sellerId': self.seller_id,
+                'subsystemAlias': 'ark',
+                'redirectUrl': self.redirect_url,
+            },
         )
         code = None
         if code_result.code == Code.SUCCESS and code_result.success:
@@ -78,30 +82,32 @@ class Client(BaseClient):
             return
 
         result = self.request(
-            'post', '/ark/open_api/v3/common_controller',
-            action='oauth.getAccessToken', data={
-                'code': code
-            }, token_request=True
+            'post',
+            '/ark/open_api/v3/common_controller',
+            action='oauth.getAccessToken',
+            data={'code': code},
+            token_request=True,
         )
         if result.error_code == Code.SUCCESS and result.success:
             self._token = Token(
                 access_token=result.data['accessToken'],
                 refresh_token=result.data['refreshToken'],
                 expires_in=result.data['accessTokenExpiresAt'] / 1000 - time.time(),
-                expires_at=datetime.datetime.fromtimestamp(result.data['accessTokenExpiresAt'] / 1000)
+                expires_at=datetime.datetime.fromtimestamp(result.data['accessTokenExpiresAt'] / 1000),
             )
 
     def refresh_access_token(self):
         result = self.request(
-            'post', '/ark/open_api/v3/common_controller',
-            action='oauth.refreshToken', data={
-                'refreshToken': self._token.refresh_token
-            }, token_request=True
+            'post',
+            '/ark/open_api/v3/common_controller',
+            action='oauth.refreshToken',
+            data={'refreshToken': self._token.refresh_token},
+            token_request=True,
         )
         if result.error_code == Code.SUCCESS and result.success:
             self._token = Token(
                 access_token=result.data['accessToken'],
                 refresh_token=result.data['refreshToken'],
                 expires_in=result.data['accessTokenExpiresAt'] / 1000 - time.time(),
-                expires_at=datetime.datetime.fromtimestamp(result.data['accessTokenExpiresAt'] / 1000)
+                expires_at=datetime.datetime.fromtimestamp(result.data['accessTokenExpiresAt'] / 1000),
             )

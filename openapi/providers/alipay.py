@@ -1,16 +1,15 @@
-import json
 import hashlib
+import json
 import typing
-
-import OpenSSL
-from pathlib import Path
+from base64 import decodebytes, encodebytes
 from datetime import datetime
+from pathlib import Path
 from urllib.parse import quote_plus
 
-from base64 import encodebytes, decodebytes
+import OpenSSL
+from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
-from Crypto.Hash import SHA256
 
 from openapi.enums import IntegerChoices
 from openapi.exceptions import NotFoundPath
@@ -39,10 +38,13 @@ class Client(BaseClient):
     API_VERSION = '1.0'
 
     def __init__(
-        self, app_id,
-        app_private_key_path, app_cert_public_key_path,
-        alipay_root_cert_path, alipay_cert_public_key_path,
-        is_sandbox=False
+        self,
+        app_id,
+        app_private_key_path,
+        app_cert_public_key_path,
+        alipay_root_cert_path,
+        alipay_cert_public_key_path,
+        is_sandbox=False,
     ):
         super().__init__()
         if is_sandbox:
@@ -96,7 +98,7 @@ class Client(BaseClient):
             'app_cert_sn': self.app_cert_sn,
             'alipay_root_cert_sn': self.root_cert_sn,
             'version': self.API_VERSION,
-            'biz_content': data
+            'biz_content': data,
         }
 
         if notify_url is not None:
@@ -108,8 +110,7 @@ class Client(BaseClient):
 
     def build_query_params(self, data):
         ordered_items = sorted(
-            ((k, v if not isinstance(v, dict) else json.dumps(v, separators=(',', ':')))
-             for k, v in data.items())
+            ((k, v if not isinstance(v, dict) else json.dumps(v, separators=(',', ':'))) for k, v in data.items())
         )
         unsigned_string = '&'.join(f'{k}={v}' for k, v in ordered_items)
         sign = calculate_signature(unsigned_string.encode('utf-8'), self.app_private_key)
@@ -126,18 +127,12 @@ class Client(BaseClient):
 
     @property
     def alipay_public_key(self):
-        cert = OpenSSL.crypto.load_certificate(
-            OpenSSL.crypto.FILETYPE_PEM, self.alipay_cert_public_key.encode('ascii')
-        )
-        return RSA.importKey(OpenSSL.crypto.dump_publickey(
-            OpenSSL.crypto.FILETYPE_PEM, cert.get_pubkey()
-        ).decode())
+        cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, self.alipay_cert_public_key.encode('ascii'))
+        return RSA.importKey(OpenSSL.crypto.dump_publickey(OpenSSL.crypto.FILETYPE_PEM, cert.get_pubkey()).decode())
 
     @property
     def app_cert_sn(self):
-        cert = OpenSSL.crypto.load_certificate(
-            OpenSSL.crypto.FILETYPE_PEM, self.app_cert_public_key.encode('ascii')
-        )
+        cert = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, self.app_cert_public_key.encode('ascii'))
         cert_issue = cert.get_issuer()
         name = f'CN={cert_issue.CN},OU={cert_issue.OU},O={cert_issue.O},C={cert_issue.C}'
         m = hashlib.md5()
@@ -148,9 +143,7 @@ class Client(BaseClient):
     def root_cert_sn(self):
         root_cert_sn = None
         for cert in (
-            OpenSSL.crypto.load_certificate(
-                OpenSSL.crypto.FILETYPE_PEM, c.encode('ascii')
-            )
+            OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, c.encode('ascii'))
             for c in self.alipay_root_cert.split('\n\n')
         ):
             try:
@@ -161,7 +154,7 @@ class Client(BaseClient):
                 cert_issue = cert.get_issuer()
                 name = f'CN={cert_issue.CN},OU={cert_issue.OU},O={cert_issue.O},C={cert_issue.C}'
                 m = hashlib.md5()
-                m.update(bytes(f'{name}{cert.get_serial_number()}', encoding="utf8"))
+                m.update(bytes(f'{name}{cert.get_serial_number()}', encoding='utf8'))
                 cert_sn = m.hexdigest()
                 if not root_cert_sn:
                     root_cert_sn = cert_sn
@@ -171,15 +164,11 @@ class Client(BaseClient):
 
     def check_signature(self, data: typing.Dict) -> bool:
         sign: str = data['sign']
-        check_data = {
-            k: v
-            for k, v in data.items()
-            if k not in ('sign', 'sign_type')
-        }
+        check_data = {k: v for k, v in data.items() if k not in ('sign', 'sign_type')}
         verify_data = sorted(
             ((k, v if not isinstance(v, dict) else json.dumps(v, separators=(',', ':'))) for k, v in check_data.items())
         )
-        message = '&'.join(u'{}={}'.format(k, v) for k, v in verify_data)
+        message = '&'.join(f'{k}={v}' for k, v in verify_data)
         signer = PKCS1_v1_5.new(self.alipay_public_key)
         digest = SHA256.new()
         digest.update(message.encode())
