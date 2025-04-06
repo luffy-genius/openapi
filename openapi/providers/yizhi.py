@@ -26,10 +26,7 @@ class Client(BaseClient):
     API_VERSION = ''
     API_BASE_URL = 'https://app-api.yizhiweixin.com/open-api'
 
-    def __init__(
-        self, app_id, secret,
-        decrypt_key=None, decrypt_token=None
-    ):
+    def __init__(self, app_id, secret, decrypt_key=None, decrypt_token=None):
         super().__init__()
         self.codes = Code
         self.app_id = app_id
@@ -38,10 +35,7 @@ class Client(BaseClient):
         self.decrypt_key = decrypt_key
         self.decrypt_token = decrypt_token
 
-    def request(
-        self, method, endpoint, params=None, data=None,
-        token_request=False
-    ) -> Result:
+    def request(self, method, endpoint, params=None, data=None, token_request=False) -> Result:
         if not token_request:
             params = params or {}
             if 'access_token' not in params:
@@ -53,12 +47,10 @@ class Client(BaseClient):
 
     def fetch_access_token(self):
         result = self.request(
-            'get', '/accessToken', params={
-                'appid': self.app_id,
-                'secret_key': self.secret,
-                'grant_type': 'client_credential'
-            },
-            token_request=True
+            'get',
+            '/accessToken',
+            params={'appid': self.app_id, 'secret_key': self.secret, 'grant_type': 'client_credential'},
+            token_request=True,
         )
         if result.code == self.codes.SUCCESS:
             self._token = Token(**result.data)
@@ -79,8 +71,5 @@ class Client(BaseClient):
         pad = ord(plain_text[-1:])
         content = plain_text[16:-pad]
         json_length = socket.ntohl((struct.unpack('I', content[:4]))[0])
-        json_content = content[4:json_length + 4]
-        return Result(
-            code=self.codes.SUCCESS, msg='OK',
-            data=json.loads(json_content.decode())
-        )
+        json_content = content[4 : json_length + 4]
+        return Result(code=self.codes.SUCCESS, msg='OK', data=json.loads(json_content.decode()))

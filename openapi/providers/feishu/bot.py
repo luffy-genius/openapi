@@ -27,7 +27,9 @@ class Client(BaseClient):
         pass
 
     def request(
-        self, method, endpoint,
+        self,
+        method,
+        endpoint,
         json: typing.Union[typing.Dict, typing.List] = None,
     ):
         request_url = f'{self.API_BASE_URL}{self.API_VERSION}{endpoint}'

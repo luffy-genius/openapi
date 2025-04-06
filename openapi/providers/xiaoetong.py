@@ -27,11 +27,7 @@ class Client(BaseClient):
     API_VERSION = ''
     API_BASE_URL = 'https://api.xiaoe-tech.com'
 
-    def __init__(
-        self, app_id, secret,
-        client_id=None,
-        decrypt_key=None, decrypt_token=None
-    ):
+    def __init__(self, app_id, secret, client_id=None, decrypt_key=None, decrypt_token=None):
         super().__init__()
         self.codes = Code
 
@@ -42,10 +38,7 @@ class Client(BaseClient):
         self.decrypt_key = decrypt_key
         self.decrypt_token = decrypt_token
 
-    def request(
-        self, method, endpoint, params=None, data=None,
-        token_request=False
-    ) -> Result:
+    def request(self, method, endpoint, params=None, data=None, token_request=False) -> Result:
         if not token_request:
             if method == 'get' and params and 'access_token' not in params:
                 params['access_token'] = self.access_token
@@ -59,20 +52,21 @@ class Client(BaseClient):
 
     def check_token(self, access_token):
         result = self.request(
-            'post', '/xe.user.batch.get/1.0.0',
-            data={'access_token': access_token, 'page': 1, 'page_size': 1}
+            'post', '/xe.user.batch.get/1.0.0', data={'access_token': access_token, 'page': 1, 'page_size': 1}
         )
         return result.code == self.codes.SUCCESS
 
     def fetch_access_token(self):
         result: Result = self.request(
-            'get', '/token', params={
+            'get',
+            '/token',
+            params={
                 'app_id': self.app_id,
                 'secret_key': self.secret,
                 'client_id': self.client_id,
-                'grant_type': 'client_credential'
+                'grant_type': 'client_credential',
             },
-            token_request=True
+            token_request=True,
         )
         if result.code == self.codes.SUCCESS:
             self._token = Token(**result.data)
@@ -96,8 +90,5 @@ class Client(BaseClient):
         pad = ord(plain_text[-1:])
         content = plain_text[16:-pad]
         xml_length = socket.ntohl((struct.unpack('I', content[:4]))[0])
-        xml_content = content[4:xml_length + 4]
-        return Result(
-            code=self.codes.SUCCESS, msg='OK',
-            data=xml_to_dict(f'<xml>{xml_content.decode()}</xml>')
-        )
+        xml_content = content[4 : xml_length + 4]
+        return Result(code=self.codes.SUCCESS, msg='OK', data=xml_to_dict(f'<xml>{xml_content.decode()}</xml>'))

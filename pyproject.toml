@@ -39,3 +39,8 @@ exclude = [
     ".github",
     "examples"
 ]
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+line-ending = "lf"

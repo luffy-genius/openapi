@@ -9,9 +9,7 @@ from cryptography.hazmat.primitives.hmac import HMAC
 from openapi.enums import IntegerChoices
 from openapi.providers.base import BaseClient, BaseResult, Token
 
-SIGN_FIELDS = [
-    'app_key', 'method', 'param_json', 'timestamp', 'v'
-]
+SIGN_FIELDS = ['app_key', 'method', 'param_json', 'timestamp', 'v']
 
 
 class Code(IntegerChoices):
@@ -20,11 +18,8 @@ class Code(IntegerChoices):
 
 
 def format_params(params, secret=None):
-    data = [
-        f'{k}{params[k]}'
-        for k in params if k in SIGN_FIELDS
-    ]
-    return f"{secret}{''.join(sorted(data))}{secret}"
+    data = [f'{k}{params[k]}' for k in params if k in SIGN_FIELDS]
+    return f'{secret}{"".join(sorted(data))}{secret}'
 
 
 def calc_signature(params, secret):
@@ -55,10 +50,7 @@ class Client(BaseClient):
         self.shop_id = shop_id
         self.codes = Code
 
-    def request(
-        self, method, endpoint, params=None, data=None,
-        token_request=False
-    ) -> Result:
+    def request(self, method, endpoint, params=None, data=None, token_request=False) -> Result:
         if params is None:
             params = {
                 'v': self.API_VERSION,
@@ -66,12 +58,10 @@ class Client(BaseClient):
                 'timestamp': datetime.now().strftime('%Y-%m-%d %X'),
                 'method': '.'.join(filter(lambda _: bool(_), endpoint.split('/'))),
                 'param_json': json.dumps(
-                    {
-                        key: value
-                        for key, value in data.items() if value is not None
-                    },
-                    sort_keys=True, separators=(',', ':')
-                )
+                    {key: value for key, value in data.items() if value is not None},
+                    sort_keys=True,
+                    separators=(',', ':'),
+                ),
             }
         sign = calc_signature(params, self.secret)
         params['sign_method'] = 'hmac-sha256'
@@ -85,22 +75,22 @@ class Client(BaseClient):
 
     def fetch_access_token(self):
         result = self.request(
-            'post', '/token/create', data={
-                'code': '',
-                'grant_type': 'authorization_self',
-                'shop_id': self.shop_id
-            },
-            token_request=True
+            'post',
+            '/token/create',
+            data={'code': '', 'grant_type': 'authorization_self', 'shop_id': self.shop_id},
+            token_request=True,
         )
         if result.code == self.codes.SUCCESS:
             self._token = Token(**result.data)
 
     def refresh_access_token(self):
         result = self.request(
-            'post', '/token/create', data={
+            'post',
+            '/token/create',
+            data={
                 'refresh_token': self._token.refresh_token,
                 'grant_type': 'refresh_token',
-            }
+            },
         )
         if result.code == self.codes.SUCCESS:
             self._token = Token(**result.data)

@@ -33,15 +33,12 @@ class Client(BaseClient):
         self.secret = secret
         self.codes = Code
 
-    def request(
-        self, method, prefix, action, version,
-        params=None, data=None
-    ):
+    def request(self, method, prefix, action, version, params=None, data=None):
         method = method.upper()
         public_params = {
             'Action': action,
             'Version': version,
-            'Timestamp': time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            'Timestamp': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
             'SignatureMethod': 'HMAC-SHA1',
             'SignatureVersion': '1.0',
             'SignatureNonce': uuid.uuid4().hex,
@@ -58,12 +55,11 @@ class Client(BaseClient):
         for k, v in sorted_data:
             if not v:
                 continue
-            sign_string += quote(k, safe='~') + "=" + quote(v, safe='~') + '&'
+            sign_string += quote(k, safe='~') + '=' + quote(v, safe='~') + '&'
 
         secret = f'{self.secret}&'
         hmb = hmac.new(
-            secret.encode(),
-            (f'{method}&%2F&' + quote(sign_string[:-1], safe='~')).encode(), 'sha1'
+            secret.encode(), (f'{method}&%2F&' + quote(sign_string[:-1], safe='~')).encode(), 'sha1'
         ).digest()
         signature = quote(base64.standard_b64encode(hmb).decode('ascii'), safe='~')
         query_string = f'{sign_string[:-1]}&Signature={signature}'

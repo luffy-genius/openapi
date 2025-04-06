@@ -22,10 +22,7 @@ class Result(BaseResult):
     msg: typing.Optional[str] = ''
 
 
-def calc_signature(
-    params: typing.Dict, company_id: str,
-    sign_key: str, timestamp: int, sign_type: SignType
-):
+def calc_signature(params: typing.Dict, company_id: str, sign_key: str, timestamp: int, sign_type: SignType):
     if sign_type == SignType.SHA256:
         return hmac.new(f'{timestamp}{company_id}'.encode(), sign_key.encode(), digestmod=hashlib.sha256).hexdigest()
 
@@ -52,32 +49,25 @@ class Client(BaseClient):
         pass
 
     def request(
-        self, method, endpoint, sign_key, sign_type: SignType,
+        self,
+        method,
+        endpoint,
+        sign_key,
+        sign_type: SignType,
         params: typing.Dict = None,
         data: typing.Dict = None,
-        json: typing.Dict = None
+        json: typing.Dict = None,
     ):
         request_url = f'{self.API_BASE_URL}{endpoint}'
         timestamp = int(time.time())
         default_headers = {'timestamp': f'{timestamp}'}
         if sign_type == SignType.MD5:
             default_headers.update(
-                token=sign_key,
-                sign=calc_signature(
-                    json, self.company_id, sign_key,
-                    timestamp, sign_type
-                )
+                token=sign_key, sign=calc_signature(json, self.company_id, sign_key, timestamp, sign_type)
             )
         else:
             default_headers.update(
-                accessToken=sign_key,
-                signature=calc_signature(
-                    json, self.company_id, sign_key,
-                    timestamp, sign_type
-                )
+                accessToken=sign_key, signature=calc_signature(json, self.company_id, sign_key, timestamp, sign_type)
             )
-        response = self._request(
-            method, request_url, params, data, json,
-            headers=default_headers
-        )
+        response = self._request(method, request_url, params, data, json, headers=default_headers)
         return Result(**(response.json() if response else {'code': self.codes.FAIL}))

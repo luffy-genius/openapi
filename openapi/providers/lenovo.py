@@ -79,14 +79,11 @@ class Client(BaseClient):
             'nonce': secrets.token_hex(16),
             'timestamp': str(int(time.time() * 1000)),
             'version': self.VERSION,
-            'signType': 'RSA2'
+            'signType': 'RSA2',
         }
         data.update(**public_params)
 
-        data['sign'] = calculate_signature(
-            format_params(data).encode(),
-            self.private_key
-        )
+        data['sign'] = calculate_signature(format_params(data).encode(), self.private_key)
         request_url = f'{self.API_BASE_URL}{endpoint}'
         response = self._request(method, request_url, json=data)
         return Result(**response.json())

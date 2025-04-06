@@ -29,7 +29,7 @@ def mask_sensitive_data(data):
 
     for key, value in data.items():
         if key in SENSITIVE_KEYS:
-            data[key] = "***FILTERED***"
+            data[key] = '***FILTERED***'
 
         if type(value) == dict:
             data[key] = mask_sensitive_data(data[key])
@@ -72,18 +72,13 @@ class BaseClient:
         self.enable_webhook = False
         self.webhook_url = None
 
-    def _request(
-        self, method, request_url,
-        params=None, data=None, json=None, headers=None
-    ) -> httpx.Response:
+    def _request(self, method, request_url, params=None, data=None, json=None, headers=None) -> httpx.Response:
         response = None
         is_error = False
         errmsg = ''
         try:
             response = httpx.request(
-                method, request_url, headers=headers,
-                params=params, data=data, json=json,
-                timeout=httpx.Timeout(10)
+                method, request_url, headers=headers, params=params, data=data, json=json, timeout=httpx.Timeout(10)
             )
             is_error = response.is_error
         except httpx.HTTPError as exc:
@@ -93,19 +88,16 @@ class BaseClient:
             _data = data or json or {}
             format_data = {
                 'date': datetime.now().strftime('%Y-%m-%d %X'),
-                'method': method, 'endpoint': request_url,
-                'headers': _json.dumps(
-                    mask_sensitive_data(headers or {}), indent=2, ensure_ascii=False
-                ),
-                'params': _json.dumps(
-                    mask_sensitive_data(params or {}), indent=2, ensure_ascii=False
-                ),
-                'data': _json.dumps(
-                    mask_sensitive_data(_data),
-                    indent=2, ensure_ascii=False
-                ) if isinstance(_data, dict) else _data,
+                'method': method,
+                'endpoint': request_url,
+                'headers': _json.dumps(mask_sensitive_data(headers or {}), indent=2, ensure_ascii=False),
+                'params': _json.dumps(mask_sensitive_data(params or {}), indent=2, ensure_ascii=False),
+                'data': _json.dumps(mask_sensitive_data(_data), indent=2, ensure_ascii=False)
+                if isinstance(_data, dict)
+                else _data,
                 'result': response.text if response is not None else '',
-                'is_error': is_error, 'errmsg': errmsg
+                'is_error': is_error,
+                'errmsg': errmsg,
             }
             endpoint = request_url.replace(self.API_BASE_URL, '')
             if self.enable_webhook and self.webhook_url and endpoint not in self._ignore_endpoints:
@@ -121,18 +113,23 @@ class BaseClient:
 
     def send_webhook_message(self, message):
         try:
-            httpx.request('post', self.webhook_url, json={
-                'msg_type': 'post', 'content': {
-                    'post': {
-                        'zh_cn': {
-                            'title': self.NAME,
-                            'content': [
-                                [{'tag': 'text', 'text': message}],
-                            ]
+            httpx.request(
+                'post',
+                self.webhook_url,
+                json={
+                    'msg_type': 'post',
+                    'content': {
+                        'post': {
+                            'zh_cn': {
+                                'title': self.NAME,
+                                'content': [
+                                    [{'tag': 'text', 'text': message}],
+                                ],
+                            }
                         }
-                    }
-                }
-            })
+                    },
+                },
+            )
         except httpx.HTTPError:
             pass
 
@@ -147,18 +144,12 @@ class BaseClient:
             expires_in = (expires_at - datetime.now()).seconds
 
         self._token = Token(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            expires_in=expires_in,
-            expires_at=expires_at
+            access_token=access_token, refresh_token=refresh_token, expires_in=expires_in, expires_at=expires_at
         )
 
     @property
     def access_token(self):
-        if not (
-            self._token and self._token.is_valid
-            and self.check_token(self._token.access_token)
-        ):
+        if not (self._token and self._token.is_valid and self.check_token(self._token.access_token)):
             self.fetch_access_token()
 
         return self._token.access_token

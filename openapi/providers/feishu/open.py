@@ -28,24 +28,21 @@ class Client(BaseClient):
 
     def fetch_access_token(self):
         result = self.request(
-            'post', '/auth/v3/tenant_access_token/internal',
-            json={
-                'app_id': self.app_id,
-                'app_secret': self.secret
-            },
-            token_request=True
+            'post',
+            '/auth/v3/tenant_access_token/internal',
+            json={'app_id': self.app_id, 'app_secret': self.secret},
+            token_request=True,
         )
         if result.code == self.codes.SUCCESS:
-            self._token = Token(
-                access_token=result.data['tenant_access_token'],
-                expires_in=result.data['expire']
-            )
+            self._token = Token(access_token=result.data['tenant_access_token'], expires_in=result.data['expire'])
 
     def request(
-        self, method, endpoint,
+        self,
+        method,
+        endpoint,
         json: typing.Union[typing.Dict, typing.List] = None,
         headers: typing.Optional[typing.Dict] = None,
-        token_request=False
+        token_request=False,
     ):
         request_url = f'{self.API_BASE_URL}{endpoint}'
         if not token_request:

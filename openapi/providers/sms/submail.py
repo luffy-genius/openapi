@@ -33,14 +33,14 @@ class Client(BaseClient):
         pass
 
     def request(
-        self, method, endpoint,
+        self,
+        method,
+        endpoint,
         params: typing.Dict = None,
         data: typing.Dict = None,
         json: typing.Dict = None,
     ):
         request_url = f'{self.API_BASE_URL}{endpoint}'
-        json.update(**{
-            'appid': self.app_id, 'signature': self.app_key
-        })
+        json.update(**{'appid': self.app_id, 'signature': self.app_key})
         response = self._request(method, request_url, params, data, json)
         return Result(**(response.json() if response else {'status': self.codes.FAIL}))
