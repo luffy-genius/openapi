@@ -1,10 +1,10 @@
 import time
 import typing
 import hashlib
-import json as _json
 
 from openapi.providers.base import BaseClient, BaseResult
 from openapi.enums import IntegerChoices
+from openapi.utils import encode_json
 
 
 def calc_signature(string: str):
@@ -50,7 +50,7 @@ class Client(BaseClient):
             headers = {}
 
         timestamp = f'{int(time.time() * 1000)}'
-        string = f'{self.app_id}{timestamp}{_json.dumps(data or json)}{self.app_key}'
+        string = f'{self.app_id}{timestamp}{encode_json(data or json)}{self.app_key}'
         headers.update(**{
             'appId': self.app_id,
             'timestamp': timestamp,
