@@ -1,5 +1,5 @@
 httpx==0.28.1
-pydantic==1.10.21
+pydantic==1.10.22
 pycryptodome==3.22.0
 cryptography==44.0.2
 pyOpenSSL==25.0.0
