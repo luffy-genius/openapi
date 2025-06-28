@@ -83,6 +83,10 @@ FIELDS = [
     {
         'fieldId': '138623',
         'alias': '大航海营期'
+    },
+    {
+        'fieldId': '144541',
+        'alias': '3天Python营'
     }
 ]
 
