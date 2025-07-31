@@ -31,10 +31,10 @@ def calc_signature(params, secret):
 
 
 class Result(BaseResult):
-    log_id: Optional[str]
-    msg: Optional[str]
-    sub_code: Optional[str]
-    sub_msg: Optional[str]
+    log_id: str | None = None
+    msg: str | None = None
+    sub_code: str | None = None
+    sub_msg: str | None = None
 
 
 class Client(BaseClient):

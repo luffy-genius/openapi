@@ -40,9 +40,9 @@ class Code(TextChoices):
 
 
 class Result(BaseResult):
-    code: Union[Code, str] = Code.SUCCESS
-    data: Optional[Dict]
-    message: Optional[str]
+    code: Code | str = Code.SUCCESS
+    data: Dict | None = None
+    message: str | None = None
 
 
 class Client(BaseClient):

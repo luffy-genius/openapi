@@ -1,6 +1,6 @@
-import hashlib
 import time
-import typing
+import hashlib
+from typing import Dict, List, Union
 
 from openapi.enums import IntegerChoices
 from openapi.providers.base import BaseClient, BaseResult
@@ -42,10 +42,10 @@ class Client(BaseClient):
         self,
         method,
         endpoint,
-        params: typing.Dict = None,
-        data: typing.Union[typing.Dict, typing.List] = None,
-        json: typing.Union[typing.Dict, typing.List] = None,
-        headers: typing.Dict = None,
+        params: Dict = None,
+        data: Union[Dict, List] = None,
+        json: Union[Dict, List] = None,
+        headers: Dict = None,
     ):
         request_url = f'{self.API_BASE_URL}{self.API_VERSION}{endpoint}'
         if headers is None:

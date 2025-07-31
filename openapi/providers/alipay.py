@@ -1,10 +1,10 @@
-import hashlib
 import json
-import typing
+import hashlib
+from pathlib import Path
 from base64 import decodebytes, encodebytes
 from datetime import datetime
-from pathlib import Path
 from urllib.parse import quote_plus
+from typing import Dict
 
 import OpenSSL
 from Crypto.Hash import SHA256
@@ -162,7 +162,7 @@ class Client(BaseClient):
                     root_cert_sn = f'{root_cert_sn}_{cert_sn}'
         return root_cert_sn
 
-    def check_signature(self, data: typing.Dict) -> bool:
+    def check_signature(self, data: Dict) -> bool:
         sign: str = data['sign']
         check_data = {k: v for k, v in data.items() if k not in ('sign', 'sign_type')}
         verify_data = sorted(

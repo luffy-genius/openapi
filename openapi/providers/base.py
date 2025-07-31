@@ -56,9 +56,9 @@ class Token(BaseModel):
 
 
 class BaseResult(BaseModel):
-    code: Optional[int]
-    data: Optional[Union[List, Dict, int]]
-    message: Optional[str]
+    code: int | None = None
+    data: Union[List, Dict, int] | None = None
+    message: str | None = None
 
 
 class BaseClient:

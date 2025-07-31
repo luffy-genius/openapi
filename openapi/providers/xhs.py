@@ -1,6 +1,5 @@
 import datetime
 import time
-from typing import Optional
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.hashes import MD5, Hash
@@ -24,8 +23,8 @@ class Code(IntegerChoices):
 
 class Result(BaseResult):
     success: bool
-    error_code: Optional[int]
-    error_msg: Optional[str]
+    error_code: int | None = None
+    error_msg: str | None = None
 
 
 class Client(BaseClient):

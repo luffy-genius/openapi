@@ -1,4 +1,4 @@
-import typing
+from typing import Optional, Union, List, Dict
 
 from openapi.enums import IntegerChoices
 from openapi.providers.base import BaseClient, BaseResult, Token
@@ -10,7 +10,7 @@ class Code(IntegerChoices):
 
 
 class Result(BaseResult):
-    msg: typing.Optional[str]
+    msg: str = ''
 
 
 class Client(BaseClient):
@@ -40,8 +40,8 @@ class Client(BaseClient):
         self,
         method,
         endpoint,
-        json: typing.Union[typing.Dict, typing.List] = None,
-        headers: typing.Optional[typing.Dict] = None,
+        json: Optional[Union[Dict, List]] = None,
+        headers: Optional[Dict] = None,
         token_request=False,
     ):
         request_url = f'{self.API_BASE_URL}{endpoint}'
