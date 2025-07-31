@@ -1,8 +1,7 @@
-import base64
 import hmac
 import time
 import uuid
-from typing import Optional, Union
+import base64
 from urllib.parse import quote
 
 import inflection
@@ -18,8 +17,8 @@ class Code(TextChoices):
 
 class Result(BaseResult):
     request_id: str
-    biz_id: Optional[str]
-    code: Union[Code, str] = Code.SUCCESS
+    biz_id: str | None = None
+    code: Code | str = Code.SUCCESS
 
 
 class Client(BaseClient):

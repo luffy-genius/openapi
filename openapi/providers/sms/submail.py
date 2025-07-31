@@ -1,4 +1,4 @@
-import typing
+from typing import Dict, Optional
 
 from openapi.enums import TextChoices
 from openapi.providers.base import BaseClient, BaseResult
@@ -11,10 +11,10 @@ class Code(TextChoices):
 
 class Result(BaseResult):
     status: Code
-    send_id: typing.Optional[str]
-    fee: typing.Optional[int]
-    sms_credits: typing.Optional[int]
-    msg: typing.Optional[str]
+    send_id: str | None = None
+    fee: int | None = None
+    sms_credits: int | None = None
+    msg: str | None = None
 
 
 class Client(BaseClient):
@@ -36,9 +36,9 @@ class Client(BaseClient):
         self,
         method,
         endpoint,
-        params: typing.Dict = None,
-        data: typing.Dict = None,
-        json: typing.Dict = None,
+        params: Optional[Dict] = None,
+        data: Optional[Dict] = None,
+        json: Optional[Dict] = None,
     ):
         request_url = f'{self.API_BASE_URL}{endpoint}'
         json.update(**{'appid': self.app_id, 'signature': self.app_key})

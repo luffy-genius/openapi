@@ -1,4 +1,5 @@
-import typing
+from typing import Optional, Union, List, Dict
+from pydantic import Field
 
 from openapi.enums import IntegerChoices
 from openapi.providers.base import BaseClient, BaseResult
@@ -10,7 +11,7 @@ class Code(IntegerChoices):
 
 
 class Result(BaseResult):
-    StatusCode: typing.Optional[int] = None
+    status_code: Optional[int] = Field(alias='StatusCode')
 
 
 class Client(BaseClient):
@@ -30,7 +31,7 @@ class Client(BaseClient):
         self,
         method,
         endpoint,
-        json: typing.Union[typing.Dict, typing.List] = None,
+        json: Optional[Union[Dict, List]] = None,
     ):
         request_url = f'{self.API_BASE_URL}{self.API_VERSION}{endpoint}'
         response = self._request(method, request_url, json=json)

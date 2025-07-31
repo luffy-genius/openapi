@@ -1,7 +1,6 @@
+import time
 import hashlib
 import secrets
-import time
-import typing
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -18,8 +17,8 @@ class Code(TextChoices):
 class Result(BaseResult):
     return_code: str
     return_msg: str
-    result_code: Optional[str]
-    data: Optional[Dict]
+    result_code: str | None = None
+    data: Dict | None = None
 
 
 def calculate_signature(params, api_key, sign_type='MD5'):
@@ -56,7 +55,7 @@ class Client(BaseClient):
     def debug_api_key(self):
         return ''
 
-    def request(self, method: str, endpoint: str, params: Dict = None, data: Dict = None):
+    def request(self, method: str, endpoint: str, params: Optional[Dict] = None, data: Optional[Dict] = None):
         request_url = f'{self.API_BASE_URL}{"/sandboxnew" if self.is_sandbox else ""}{endpoint}'
 
         if data:
@@ -91,7 +90,7 @@ class Client(BaseClient):
         data['paySign'] = sign.upper()
         return data
 
-    def check_signature(self, data: typing.Dict) -> bool:
+    def check_signature(self, data: Optional[Dict]) -> bool:
         return data['sign'] == calculate_signature(
             {k: v for k, v in data.items() if k not in ('sign',)},
             self.api_key if not self.is_sandbox else self.debug_api_key,
