@@ -1,6 +1,6 @@
-import datetime
-import typing
 import uuid
+import datetime
+from typing import Dict, Optional
 
 from openapi.enums import IntegerChoices
 from openapi.providers.base import BaseClient, BaseResult
@@ -14,7 +14,7 @@ class Code(IntegerChoices):
 
 class Result(BaseResult):
     error: int
-    message: typing.Optional[str]
+    message: str | None = None
 
 
 class Client(BaseClient):
@@ -29,7 +29,7 @@ class Client(BaseClient):
 
         self.codes = Code
 
-    def request(self, method, endpoint, params: typing.Dict = None, data: typing.Dict = None):
+    def request(self, method, endpoint, params: Optional[Dict] = None, data: Optional[Dict] = None):
         default_data = {
             'apName': self.app_id,
             'apPassword': self.app_key,

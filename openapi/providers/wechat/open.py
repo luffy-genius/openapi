@@ -3,7 +3,6 @@ import hashlib
 import json
 import socket
 import struct
-from typing import Optional
 from urllib.parse import quote
 
 from Crypto.Cipher import AES
@@ -21,8 +20,8 @@ class Code(IntegerChoices):
 
 class Result(BaseResult):
     errcode: int = Code.SUCCESS
-    errmsg: Optional[str]
-    msgid: Optional[int]
+    errmsg: str = ''
+    msgid: int | None = None
 
 
 class Client(BaseClient):

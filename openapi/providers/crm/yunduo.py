@@ -1,7 +1,7 @@
-import hashlib
 import hmac
 import time
-import typing
+import hashlib
+from typing import Dict, Optional
 
 from openapi.enums import IntegerChoices, TextChoices
 from openapi.providers.base import BaseClient, BaseResult
@@ -19,10 +19,10 @@ class Code(IntegerChoices):
 
 
 class Result(BaseResult):
-    msg: typing.Optional[str] = ''
+    msg: str = ''
 
 
-def calc_signature(params: typing.Dict, company_id: str, sign_key: str, timestamp: int, sign_type: SignType):
+def calc_signature(params: Dict, company_id: str, sign_key: str, timestamp: int, sign_type: SignType):
     if sign_type == SignType.SHA256:
         return hmac.new(f'{timestamp}{company_id}'.encode(), sign_key.encode(), digestmod=hashlib.sha256).hexdigest()
 
@@ -54,9 +54,9 @@ class Client(BaseClient):
         endpoint,
         sign_key,
         sign_type: SignType,
-        params: typing.Dict = None,
-        data: typing.Dict = None,
-        json: typing.Dict = None,
+        params: Optional[Dict] = None,
+        data: Optional[Dict] = None,
+        json: Optional[Dict] = None,
     ):
         request_url = f'{self.API_BASE_URL}{endpoint}'
         timestamp = int(time.time())

@@ -1,9 +1,8 @@
-import base64
-import hashlib
 import json
+import base64
 import socket
 import struct
-from typing import Optional
+import hashlib
 
 from Crypto.Cipher import AES
 
@@ -18,7 +17,7 @@ class Code(IntegerChoices):
 
 
 class Result(BaseResult):
-    msg: Optional[str] = ''
+    msg: str = ''
 
 
 class Client(BaseClient):
