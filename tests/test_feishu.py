@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from openapi.providers.feishu.bot import Result as BotResult
-from openapi.providers.feishu.open import Result as OpenResult
+from openapi.providers.feishu.open import Result as OpenResult, Token as OpenToken
 
 
 class FeiShuBotTest(TestCase):
@@ -16,3 +16,7 @@ class FeiShuOpenTest(TestCase):
     def test_result(self):
         r = OpenResult()
         assert r.msg == ''
+
+    def test_token(self):
+        t = OpenToken(access_token='1', )
+        assert t.access_token == '1'

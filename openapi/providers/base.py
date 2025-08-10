@@ -43,10 +43,10 @@ def mask_sensitive_data(data):
 class Token(BaseModel):
     access_token: str
     expires_in: int = 7200
-    refresh_token: Optional[str]
+    refresh_token: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.now)
-    expires_at: Optional[datetime]
-    refresh_expires_at: Optional[datetime]
+    expires_at: Optional[datetime] = None
+    refresh_expires_at: Optional[datetime] = None
 
     @property
     def is_valid(self):
