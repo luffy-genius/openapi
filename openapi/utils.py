@@ -1,5 +1,5 @@
-from typing import Any
 from json import dumps as json_dumps
+from typing import Any
 from xml.etree import ElementTree as EleTree
 
 

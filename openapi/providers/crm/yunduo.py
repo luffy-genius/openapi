@@ -1,6 +1,6 @@
+import hashlib
 import hmac
 import time
-import hashlib
 from typing import Dict, Optional
 
 from openapi.enums import IntegerChoices, TextChoices

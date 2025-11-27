@@ -1,7 +1,8 @@
 from unittest import TestCase
 
 from openapi.providers.feishu.bot import Result as BotResult
-from openapi.providers.feishu.open import Result as OpenResult, Token as OpenToken
+from openapi.providers.feishu.open import Result as OpenResult
+from openapi.providers.feishu.open import Token as OpenToken
 
 
 class FeiShuBotTest(TestCase):

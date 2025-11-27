@@ -1,7 +1,7 @@
+import base64
 import hmac
 import time
 import uuid
-import base64
 from urllib.parse import quote
 
 import inflection

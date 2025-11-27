@@ -2,7 +2,7 @@ import secrets
 import time
 from base64 import decodebytes, encodebytes
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict
 
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA

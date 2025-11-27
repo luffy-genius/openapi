@@ -1,4 +1,5 @@
-from typing import Optional, Union, List, Dict
+from typing import Dict, List, Optional, Union
+
 from pydantic import Field
 
 from openapi.enums import IntegerChoices

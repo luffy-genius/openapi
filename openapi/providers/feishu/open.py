@@ -1,4 +1,4 @@
-from typing import Optional, Union, List, Dict
+from typing import Dict, List, Optional, Union
 
 from openapi.enums import IntegerChoices
 from openapi.providers.base import BaseClient, BaseResult, Token

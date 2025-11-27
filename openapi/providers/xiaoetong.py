@@ -1,7 +1,7 @@
 import base64
+import hashlib
 import socket
 import struct
-import hashlib
 
 from Crypto.Cipher import AES
 
