@@ -1,6 +1,6 @@
 import json as _json
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, TypeVar, Generic
 
 import httpx
 from pydantic import BaseModel, Field
@@ -19,6 +19,8 @@ result:
 is_error: {is_error}
 errmsg: {errmsg}
 """
+
+T = TypeVar('T')
 
 SENSITIVE_KEYS = ['app_key', 'secret', 'secret_key', 'signature']
 
@@ -55,10 +57,10 @@ class Token(BaseModel):
         return (datetime.now() - self.created_at).total_seconds() < (self.expires_in - self.expires_in * 0.3)
 
 
-class BaseResult(BaseModel):
+class BaseResult(BaseModel, Generic[T]):
     code: int | None = None
-    data: Union[List, Dict, int] | None = None
     message: str | None = None
+    data: T | None = None
 
 
 class BaseClient:
