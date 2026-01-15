@@ -3,6 +3,6 @@ pydantic==2.12.5
 pycryptodome==3.23.0
 cryptography==46.0.3
 pyOpenSSL==25.3.0
-ruff==0.14.11
+ruff==0.14.13
 inflection
 twine
