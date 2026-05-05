@@ -2,7 +2,7 @@ httpx==0.28.1
 pydantic==2.12.5
 pycryptodome==3.23.0
 cryptography==46.0.3
-pyOpenSSL==25.3.0
+pyOpenSSL==26.2.0
 ruff==0.14.13
 inflection
 twine
