@@ -93,7 +93,9 @@ translated_audio = media.workflow.translate_to_speech(
 
 `AudioConfig` 中的 `speech_rate`、`loudness_rate` 和 `pitch_rate` 使用统一浮点倍率，`1.0` 表示供应商默认值。语速和音高支持 `0.5`–`2.0`，响度支持 `0.1`–`2.0`。阿里云分别转换为 `rate`、`volume=round(50*loudness_rate)` 和 `pitch`，火山引擎分别转换为 `speed_ratio`、`volume_ratio` 和 `pitch_ratio`；飞影不支持这三个调节项。显式的 `AudioConfig` 值优先于 `parameters` 中的供应商透传值。
 
-语音的多语言能力是“合成传入的目标语言文本”，不会自动翻译；中文文案直接生成英文音频请使用 `media.workflow.translate_to_speech()`。组合调用会在翻译前检查语音供应商的能力、配置和音频选项，避免已知无法合成时仍发起翻译请求。SDK 不上传本地文件、不下载或转存结果。完整示例见 [`examples/media_generation.py`](examples/media_generation.py)。
+语音的多语言能力是“合成传入的目标语言文本”，不会自动翻译；中文文案直接生成英文音频请使用 `media.workflow.translate_to_speech()`。组合调用会在翻译前检查语音供应商的能力、配置和音频选项，避免已知无法合成时仍发起翻译请求。SDK 不上传本地文件、不下载或转存结果。
+
+真实供应商联调请使用仓库内的[独立示例包](examples/media_generation/README.md)。复制 `.env.example` 保存供应商配置，通过 `set -a; source examples/media_generation/.env; set +a` 导入系统环境变量；请求输入和参考参数直接在对应能力脚本顶部修改。再按文档逐项执行 `python -m examples.media_generation.<provider>.<capability>`。脚本不会一次性触发所有计费能力；异步任务会先保存 `TaskRef`，超时后可继续查询。
 
 #### 支付宝
 

@@ -8,46 +8,46 @@ from openapi.enums import TextChoices
 
 
 class ModelProvider(TextChoices):
-    VOLCENGINE = 'volcengine'
-    ALIYUN = 'aliyun'
-    HIFLY = 'hifly'
-    DEEPSEEK = 'deepseek'
+    VOLCENGINE = 'volcengine', '火山引擎'
+    ALIYUN = 'aliyun', '阿里云百炼'
+    HIFLY = 'hifly', '飞影 HiFly'
+    DEEPSEEK = 'deepseek', 'DeepSeek'
 
 
 class ModelStatus(TextChoices):
-    QUEUED = 'queued'
-    PROCESSING = 'processing'
-    SUCCEEDED = 'succeeded'
-    FAILED = 'failed'
-    EXPIRED = 'expired'
-    CANCELED = 'canceled'
+    QUEUED = 'queued', '排队中'
+    PROCESSING = 'processing', '处理中'
+    SUCCEEDED = 'succeeded', '已成功'
+    FAILED = 'failed', '已失败'
+    EXPIRED = 'expired', '已过期'
+    CANCELED = 'canceled', '已取消'
 
 
 class ModelOperation(TextChoices):
-    TEXT_OPTIMIZATION = 'text_optimization'
-    TEXT_TO_SPEECH = 'text_to_speech'
-    TRANSLATE_TO_SPEECH = 'translate_to_speech'
-    TEXT_TO_IMAGE = 'text_to_image'
-    IMAGE_TO_IMAGE = 'image_to_image'
-    IMAGE_TO_VIDEO = 'image_to_video'
-    DIGITAL_HUMAN_IMAGE_VALIDATION = 'digital_human_image_validation'
-    DIGITAL_HUMAN = 'digital_human'
-    AVATAR_CLONE = 'avatar_clone'
-    AVATAR_LIST = 'avatar_list'
+    TEXT_OPTIMIZATION = 'text_optimization', '文本优化'
+    TEXT_TO_SPEECH = 'text_to_speech', '文本转语音'
+    TRANSLATE_TO_SPEECH = 'translate_to_speech', '翻译后转语音'
+    TEXT_TO_IMAGE = 'text_to_image', '文生图'
+    IMAGE_TO_IMAGE = 'image_to_image', '图生图'
+    IMAGE_TO_VIDEO = 'image_to_video', '图生视频'
+    DIGITAL_HUMAN_IMAGE_VALIDATION = 'digital_human_image_validation', '数字人图片校验'
+    DIGITAL_HUMAN = 'digital_human', '数字人生成'
+    AVATAR_CLONE = 'avatar_clone', '形象克隆'
+    AVATAR_LIST = 'avatar_list', '形象列表'
 
 
 class TextOptimizationAction(TextChoices):
-    POLISH = 'polish'
-    EXPAND = 'expand'
-    SIMPLIFY = 'simplify'
-    TRANSLATE = 'translate'
+    POLISH = 'polish', '润色'
+    EXPAND = 'expand', '扩写'
+    SIMPLIFY = 'simplify', '简化'
+    TRANSLATE = 'translate', '翻译'
 
 
 class TextOptimizationStyle(TextChoices):
-    PROFESSIONAL = 'professional'
-    FRIENDLY = 'friendly'
-    LIVELY = 'lively'
-    CONCISE = 'concise'
+    PROFESSIONAL = 'professional', '专业'
+    FRIENDLY = 'friendly', '友好'
+    LIVELY = 'lively', '生动'
+    CONCISE = 'concise', '简洁'
 
 
 class TaskRef(BaseModel):

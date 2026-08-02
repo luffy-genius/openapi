@@ -40,6 +40,7 @@ from openapi.providers.media_generation import (
     VolcengineConfig,
     VolcengineSpeechConfig,
 )
+from openapi.providers.media_generation.registry import Capability
 
 
 class RecordingTransport:
@@ -91,6 +92,78 @@ class FakeVisualService:
 
 
 class ModelTests(unittest.TestCase):
+    def test_media_choice_labels_preserve_wire_values(self):
+        self.assertEqual(
+            ModelProvider.choices,
+            [
+                ('volcengine', '火山引擎'),
+                ('aliyun', '阿里云百炼'),
+                ('hifly', '飞影 HiFly'),
+                ('deepseek', 'DeepSeek'),
+            ],
+        )
+        self.assertEqual(
+            ModelStatus.choices,
+            [
+                ('queued', '排队中'),
+                ('processing', '处理中'),
+                ('succeeded', '已成功'),
+                ('failed', '已失败'),
+                ('expired', '已过期'),
+                ('canceled', '已取消'),
+            ],
+        )
+        self.assertEqual(
+            ModelOperation.choices,
+            [
+                ('text_optimization', '文本优化'),
+                ('text_to_speech', '文本转语音'),
+                ('translate_to_speech', '翻译后转语音'),
+                ('text_to_image', '文生图'),
+                ('image_to_image', '图生图'),
+                ('image_to_video', '图生视频'),
+                ('digital_human_image_validation', '数字人图片校验'),
+                ('digital_human', '数字人生成'),
+                ('avatar_clone', '形象克隆'),
+                ('avatar_list', '形象列表'),
+            ],
+        )
+        self.assertEqual(
+            TextOptimizationAction.choices,
+            [
+                ('polish', '润色'),
+                ('expand', '扩写'),
+                ('simplify', '简化'),
+                ('translate', '翻译'),
+            ],
+        )
+        self.assertEqual(
+            TextOptimizationStyle.choices,
+            [
+                ('professional', '专业'),
+                ('friendly', '友好'),
+                ('lively', '生动'),
+                ('concise', '简洁'),
+            ],
+        )
+        self.assertEqual(
+            Capability.choices,
+            [
+                ('text', '文本'),
+                ('speech', '语音'),
+                ('image', '图片'),
+                ('video', '视频'),
+                ('image validation', '图片校验'),
+                ('digital human', '数字人'),
+                ('avatar clone', '形象克隆'),
+                ('avatar list', '形象列表'),
+                ('task query', '任务查询'),
+            ],
+        )
+        request = TextOptimizationRequest(text='原文', model='model')
+        self.assertEqual(request.action.label, '润色')
+        self.assertEqual(request.model_dump(mode='json')['action'], 'polish')
+
     def test_media_client_exposes_domain_interfaces_without_legacy_gateway_methods(self):
         media, client = make_client(RecordingTransport([]))
         self.addCleanup(client.close)
@@ -395,9 +468,7 @@ class SpeechTests(unittest.TestCase):
 
     def test_aliyun_rejects_unsupported_audio_option_before_request(self):
         transport = RecordingTransport([])
-        media, client = make_client(
-            transport, aliyun=AliyunConfig(api_key='ali-key', workspace_id='workspace')
-        )
+        media, client = make_client(transport, aliyun=AliyunConfig(api_key='ali-key', workspace_id='workspace'))
         self.addCleanup(client.close)
         with self.assertRaises(UnsupportedCapabilityError):
             media.speech.synthesize(
@@ -472,9 +543,7 @@ class SpeechTests(unittest.TestCase):
             speech_model='qwen-tts',
             voice='voice',
         )
-        result = media.workflow.translate_to_speech(
-            request, text_provider='deepseek', speech_provider='aliyun'
-        )
+        result = media.workflow.translate_to_speech(request, text_provider='deepseek', speech_provider='aliyun')
         speech_body = json.loads(sync_transport.requests[1].content)
         self.assertEqual(speech_body['input']['text'], 'Hello')
         self.assertEqual(result.operation, ModelOperation.TRANSLATE_TO_SPEECH)
@@ -495,9 +564,7 @@ class SpeechTests(unittest.TestCase):
             hifly=HiFlyConfig(token='hifly-token'),
         )
         self.addCleanup(client.close)
-        submitted = media.workflow.translate_to_speech(
-            request, text_provider='deepseek', speech_provider='hifly'
-        )
+        submitted = media.workflow.translate_to_speech(request, text_provider='deepseek', speech_provider='hifly')
         self.assertEqual(submitted.task_ref.operation, ModelOperation.TRANSLATE_TO_SPEECH)
         restored = TaskRef.from_json(submitted.task_ref.to_json())
         completed = media.task.get(restored)
@@ -586,9 +653,7 @@ class SpeechTests(unittest.TestCase):
             voice='voice',
         )
         with self.assertRaises(ProviderAPIError):
-            media.workflow.translate_to_speech(
-                request, text_provider='deepseek', speech_provider='hifly'
-            )
+            media.workflow.translate_to_speech(request, text_provider='deepseek', speech_provider='hifly')
         self.assertEqual(len(transport.requests), 1)
 
     def test_speech_failure_mentions_completed_translation_billing(self):
@@ -612,9 +677,7 @@ class SpeechTests(unittest.TestCase):
             voice='voice',
         )
         with self.assertRaisesRegex(ProviderAPIError, 'translation request may already have been billed'):
-            media.workflow.translate_to_speech(
-                request, text_provider='deepseek', speech_provider='aliyun'
-            )
+            media.workflow.translate_to_speech(request, text_provider='deepseek', speech_provider='aliyun')
         self.assertEqual(len(transport.requests), 2)
 
 
@@ -630,9 +693,7 @@ class MediaTests(unittest.TestCase):
         media, client = make_client(transport, volcengine=VolcengineConfig(ark_api_key='ark-key'))
         self.addCleanup(client.close)
 
-        image = media.image.generate(
-            ImageGenerationRequest(prompt='cat', model='image-model'), provider='volcengine'
-        )
+        image = media.image.generate(ImageGenerationRequest(prompt='cat', model='image-model'), provider='volcengine')
         self.assertEqual(image.output.urls, ['https://out/image.png'])
         self.assertEqual(image.operation, ModelOperation.TEXT_TO_IMAGE)
         submitted = media.video.from_image(
@@ -715,9 +776,7 @@ class MediaTests(unittest.TestCase):
         for output, expected, error_type in cases:
             with self.subTest(output=output):
                 transport = RecordingTransport([(200, {'output': output})])
-                media, client = make_client(
-                    transport, aliyun=AliyunConfig(api_key='ali-key', workspace_id='workspace')
-                )
+                media, client = make_client(transport, aliyun=AliyunConfig(api_key='ali-key', workspace_id='workspace'))
                 try:
                     if error_type is not None:
                         with self.assertRaises(error_type):
@@ -783,9 +842,7 @@ class ReliabilityTests(unittest.TestCase):
         )
         media, client = make_client(query_transport, aliyun=AliyunConfig(api_key='key', workspace_id='workspace'))
         self.addCleanup(client.close)
-        result = media.task.get(
-            TaskRef(provider='aliyun', operation='digital_human', task_id='task', model='wan')
-        )
+        result = media.task.get(TaskRef(provider='aliyun', operation='digital_human', task_id='task', model='wan'))
         self.assertEqual(result.status, ModelStatus.SUCCEEDED)
         self.assertEqual(len(query_transport.requests), 4)
 
@@ -811,9 +868,7 @@ class ReliabilityTests(unittest.TestCase):
         self.assertEqual(len(recovering.requests), 3)
 
         exhausted = RecordingTransport([('connect_error', 'ali-secret unavailable')] * 4)
-        media, client = make_client(
-            exhausted, aliyun=AliyunConfig(api_key='ali-secret', workspace_id='workspace')
-        )
+        media, client = make_client(exhausted, aliyun=AliyunConfig(api_key='ali-secret', workspace_id='workspace'))
         self.addCleanup(client.close)
         with self.assertRaises(ProviderAPIError) as raised:
             media.task.get(TaskRef(provider='aliyun', operation='digital_human', task_id='task'))
@@ -822,9 +877,7 @@ class ReliabilityTests(unittest.TestCase):
         self.assertIn('**********', str(raised.exception))
 
         submission = RecordingTransport([('connect_error', 'connection failed')])
-        media, client = make_client(
-            submission, aliyun=AliyunConfig(api_key='key', workspace_id='workspace')
-        )
+        media, client = make_client(submission, aliyun=AliyunConfig(api_key='key', workspace_id='workspace'))
         self.addCleanup(client.close)
         with self.assertRaises(ProviderAPIError):
             media.video.from_image(ImageToVideoRequest(image='https://in/image.jpg'), provider='aliyun')

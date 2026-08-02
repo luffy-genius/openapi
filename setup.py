@@ -29,7 +29,7 @@ setup(
     author_email='liuzhichao9527@gmail.com',
     url='https://github.com/luffy-genius/openapi',
     license='MIT',
-    packages=find_packages(exclude=('examples',)),
+    packages=find_packages(exclude=('examples', 'examples.*')),
     include_package_data=True,
     zip_safe=True,
     install_requires=['httpx', 'pydantic>=2,<3', 'pycryptodome', 'cryptography'],

@@ -17,15 +17,15 @@ from openapi.providers.media_generation.models import ModelProvider
 
 
 class Capability(TextChoices):
-    TEXT = 'text'
-    SPEECH = 'speech'
-    IMAGE = 'image'
-    VIDEO = 'video'
-    IMAGE_VALIDATION = 'image validation'
-    DIGITAL_HUMAN = 'digital human'
-    AVATAR_CLONE = 'avatar clone'
-    AVATAR_LIST = 'avatar list'
-    TASK = 'task query'
+    TEXT = 'text', '文本'
+    SPEECH = 'speech', '语音'
+    IMAGE = 'image', '图片'
+    VIDEO = 'video', '视频'
+    IMAGE_VALIDATION = 'image validation', '图片校验'
+    DIGITAL_HUMAN = 'digital human', '数字人'
+    AVATAR_CLONE = 'avatar clone', '形象克隆'
+    AVATAR_LIST = 'avatar list', '形象列表'
+    TASK = 'task query', '任务查询'
 
 
 class ProviderRegistry:
@@ -75,9 +75,7 @@ class ProviderRegistry:
             raise ConfigurationError(f'model provider {normalized.value} is not configured')
         adapter = self._capabilities[capability].get(normalized)
         if adapter is None:
-            raise UnsupportedCapabilityError(
-                f'{normalized.value} does not support {capability.value}'
-            )
+            raise UnsupportedCapabilityError(f'{normalized.value} does not support {capability.value}')
         return adapter
 
     @staticmethod
