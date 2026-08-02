@@ -12,6 +12,89 @@ pip3 install openapipy
 
 ### 使用
 
+#### 统一媒体客户端
+
+`openapi.providers.media_generation` 提供火山引擎、阿里云百炼、飞影和 DeepSeek 的统一媒体接口。客户端按文本、语音、图片、视频、数字人、任务和组合工作流划分领域入口。凭证和文本模型由业务显式传入，SDK 不读取凭证环境变量。所有方法返回泛型 `ModelResult[T]`，原始供应商响应保存在 `result.data`。
+
+OmniHuman 使用火山官方 SDK，需要额外安装：
+
+```bash
+pip install 'openapipy[media-generation]'
+```
+
+```python
+from openapi.providers.media_generation import (
+    AliyunConfig,
+    AudioConfig,
+    DeepSeekConfig,
+    ImageGenerationRequest,
+    MediaClient,
+    ModelProvider,
+    TextOptimizationRequest,
+    TextToSpeechRequest,
+    TranslateToSpeechRequest,
+)
+
+media = MediaClient.create(
+    AliyunConfig(api_key='your-bailian-api-key', workspace_id='your-workspace-id'),
+    DeepSeekConfig(api_key='your-deepseek-api-key'),
+)
+
+text = media.text.optimize(
+    TextOptimizationRequest(text='一段待润色的文案', model='your-deepseek-model'),
+    provider=ModelProvider.DEEPSEEK,
+)
+print(text.output.text)
+
+image = media.image.generate(
+    ImageGenerationRequest(prompt='一幅极简主义山水画'),
+    provider=ModelProvider.ALIYUN,
+)
+print(image.output.urls)
+
+audio = media.speech.synthesize(
+    TextToSpeechRequest(
+        text='Hello from the media client.',
+        model='qwen-audio-3.0-tts-flash',
+        voice='longanhuan_v3.6',
+        language='en',
+        audio_config=AudioConfig(format='wav', sample_rate=24000),
+    ),
+    provider=ModelProvider.ALIYUN,
+)
+print(audio.output.urls or [audio.output.audio_base64])
+
+translated_audio = media.workflow.translate_to_speech(
+    TranslateToSpeechRequest(
+        text='今天天气很好。',
+        source_language='Chinese',
+        target_language='English',
+        translation_model='your-deepseek-model',
+        speech_model='qwen-audio-3.0-tts-flash',
+        voice='longanhuan_v3.6',
+    ),
+    text_provider=ModelProvider.DEEPSEEK,
+    speech_provider=ModelProvider.ALIYUN,
+)
+```
+
+异步提交返回的 `TaskRef` 包含供应商、操作、任务 ID 和必要的模型信息，可序列化保存，并在服务重启后传给 `media.task.get()` 或 `media.task.wait()`。`wait()` 本地超时不会取消云端任务。单次请求的 `model` 会覆盖该次调用使用的模型，但不会修改客户端默认配置。
+
+能力范围：
+
+| 能力 | 火山引擎 | 阿里云百炼 | 飞影 | DeepSeek |
+| --- | --- | --- | --- | --- |
+| 文本优化 / 翻译 | Ark | 兼容模式 | — | Chat Completions |
+| 文本转语音 | 豆包语音 | Qwen-Audio / CosyVoice | HiFly V2 | — |
+| 文生图 / 图生图 | Seedream | Wan Image | — | — |
+| 图生视频 | Seedance | Wan I2V | — | — |
+| 数字人 | OmniHuman | Wan S2V | HiFly V2 | — |
+| 图片 / 视频数字人克隆 | — | — | HiFly V2 | — |
+
+`AudioConfig` 中的 `speech_rate`、`loudness_rate` 和 `pitch_rate` 使用统一浮点倍率，`1.0` 表示供应商默认值。语速和音高支持 `0.5`–`2.0`，响度支持 `0.1`–`2.0`。阿里云分别转换为 `rate`、`volume=round(50*loudness_rate)` 和 `pitch`，火山引擎分别转换为 `speed_ratio`、`volume_ratio` 和 `pitch_ratio`；飞影不支持这三个调节项。显式的 `AudioConfig` 值优先于 `parameters` 中的供应商透传值。
+
+语音的多语言能力是“合成传入的目标语言文本”，不会自动翻译；中文文案直接生成英文音频请使用 `media.workflow.translate_to_speech()`。组合调用会在翻译前检查语音供应商的能力、配置和音频选项，避免已知无法合成时仍发起翻译请求。SDK 不上传本地文件、不下载或转存结果。完整示例见 [`examples/media_generation.py`](examples/media_generation.py)。
+
 #### 支付宝
 
 > https://opendocs.alipay.com/open/270/105898
