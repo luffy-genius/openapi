@@ -9,10 +9,12 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from examples.media_generation import common
+from examples.media_generation.workflows import digital_human_from_scratch as digital_human_workflow
 from openapi.providers.media_generation import (
     AudioOutput,
     AvatarCloneRequest,
     DigitalHumanRequest,
+    FileUploadRequest,
     GenerationTimeoutError,
     ImageGenerationRequest,
     ImageToVideoRequest,
@@ -251,6 +253,7 @@ class ScriptDispatchTests(unittest.TestCase):
         'MEDIA_HIFLY_SPEECH_VOICE': 'hifly-voice',
         'MEDIA_HIFLY_AVATAR_ID': 'avatar-1',
         'MEDIA_HIFLY_DIGITAL_HUMAN_MODEL': 'hifly-avatar',
+        'MEDIA_SILICONFLOW_MODEL': 'sf-speech',
     }
 
     CASES = (
@@ -366,6 +369,13 @@ class ScriptDispatchTests(unittest.TestCase):
             ModelProvider.HIFLY,
             {'model': 'hifly-avatar', 'avatar': 'avatar-1'},
         ),
+        (
+            'siliconflow.text_to_speech',
+            'speech.synthesize',
+            TextToSpeechRequest,
+            ModelProvider.SILICONFLOW,
+            {'model': 'sf-speech', 'voice': ''},
+        ),
     )
 
     def setUp(self):
@@ -474,6 +484,147 @@ class ScriptDispatchTests(unittest.TestCase):
             module.execute()
         media.task.get.assert_called_once_with(task_ref)
         complete.assert_called_once_with(media, result)
+
+
+class DigitalHumanWorkflowTests(unittest.TestCase):
+    @staticmethod
+    def _base_sources():
+        return dict(
+            avatar_image_url=None,
+            avatar_image_path=None,
+            avatar_video_url=None,
+            avatar_video_path=None,
+            voice_audio_url=None,
+            voice_audio_path=None,
+            avatar_title='形象',
+            voice_title='音色',
+            digital_human_title='视频',
+            digital_human_text='大家好',
+            aigc_flag=None,
+            language='zh',
+            avatar_clone_model=None,
+            parameters={},
+        )
+
+    @staticmethod
+    def _media():
+        media = MagicMock()
+        upload = MagicMock()
+        upload.output.file_id = 'file-1'
+        media.avatar.upload.return_value = upload
+        return media
+
+    @staticmethod
+    def _results():
+        clone_final = MagicMock()
+        clone_final.output.avatar_id = 'avatar-1'
+        voice_final = MagicMock()
+        voice_final.output.voice_id = 'voice-1'
+        render_final = MagicMock()
+        render_final.output.urls = ['https://out/video.mp4']
+        return [clone_final, voice_final, render_final]
+
+    def _run(self, media, results, **source_overrides):
+        sources = self._base_sources()
+        sources.update(source_overrides)
+        with patch.object(common, 'complete_result', side_effect=results):
+            with redirect_stdout(io.StringIO()):
+                return digital_human_workflow.run(media, **sources)
+
+    def test_url_image_and_audio_sources(self):
+        media = self._media()
+        results = self._results()
+        returned = self._run(
+            media,
+            results,
+            avatar_image_url='https://cdn.example.com/photo.jpg',
+            voice_audio_url='https://cdn.example.com/sample.wav',
+        )
+        self.assertIs(returned, results[2])
+
+        avatar_request = media.avatar.clone.call_args.args[0]
+        self.assertIsInstance(avatar_request, AvatarCloneRequest)
+        self.assertEqual(avatar_request.image_url, 'https://cdn.example.com/photo.jpg')
+        self.assertIsNone(avatar_request.image_file_id)
+        self.assertIsNone(avatar_request.video_url)
+        self.assertIsNone(avatar_request.video_file_id)
+        media.avatar.upload.assert_not_called()
+
+        voice_request = media.speech.clone_voice.call_args.args[0]
+        self.assertEqual(voice_request.audio_url, 'https://cdn.example.com/sample.wav')
+
+        render_request = media.avatar.render.call_args.args[0]
+        self.assertEqual(render_request.avatar, 'avatar-1')
+        self.assertEqual(render_request.voice, 'voice-1')
+        self.assertIsNone(render_request.resolution)
+        self.assertIsNone(render_request.ratio)
+
+    def test_local_image_source_uploads_and_clones_with_image_file_id(self):
+        media = self._media()
+        with tempfile.TemporaryDirectory() as directory:
+            image_path = Path(directory) / 'photo.jpg'
+            image_path.write_bytes(b'jpeg-data')
+            self._run(
+                media,
+                self._results(),
+                avatar_image_path=str(image_path),
+                voice_audio_url='https://cdn.example.com/sample.wav',
+            )
+        upload_request = media.avatar.upload.call_args.args[0]
+        self.assertIsInstance(upload_request, FileUploadRequest)
+        self.assertEqual(upload_request.content, b'jpeg-data')
+        self.assertEqual(upload_request.file_extension, 'jpg')
+        self.assertEqual(upload_request.content_type, 'image/jpeg')
+        avatar_request = media.avatar.clone.call_args.args[0]
+        self.assertEqual(avatar_request.image_file_id, 'file-1')
+        self.assertIsNone(avatar_request.image_url)
+
+    def test_local_video_source_uploads_and_clones_with_video_file_id(self):
+        media = self._media()
+        with tempfile.TemporaryDirectory() as directory:
+            video_path = Path(directory) / 'source.mp4'
+            video_path.write_bytes(b'mp4-data')
+            self._run(
+                media,
+                self._results(),
+                avatar_video_path=str(video_path),
+                voice_audio_url='https://cdn.example.com/sample.wav',
+            )
+        upload_request = media.avatar.upload.call_args.args[0]
+        self.assertEqual(upload_request.content_type, 'video/mp4')
+        self.assertEqual(upload_request.file_extension, 'mp4')
+        avatar_request = media.avatar.clone.call_args.args[0]
+        self.assertEqual(avatar_request.video_file_id, 'file-1')
+        self.assertIsNone(avatar_request.video_url)
+
+    def test_local_audio_source_clones_voice_with_file_id(self):
+        media = self._media()
+        with tempfile.TemporaryDirectory() as directory:
+            audio_path = Path(directory) / 'sample.wav'
+            audio_path.write_bytes(b'wav-data')
+            self._run(
+                media,
+                self._results(),
+                avatar_image_url='https://cdn.example.com/photo.jpg',
+                voice_audio_path=str(audio_path),
+            )
+        upload_request = media.avatar.upload.call_args.args[0]
+        self.assertEqual(upload_request.content_type, 'audio/wav')
+        voice_request = media.speech.clone_voice.call_args.args[0]
+        self.assertEqual(voice_request.file_id, 'file-1')
+        self.assertIsNone(voice_request.audio_url)
+
+    def test_empty_output_raises_explicit_error(self):
+        media = self._media()
+        results = self._results()
+        results[2].output.urls = []
+        with self.assertRaisesRegex(common.ExampleError, 'without output media'):
+            self._run(
+                media,
+                results,
+                avatar_image_url='https://cdn.example.com/photo.jpg',
+                voice_audio_url='https://cdn.example.com/sample.wav',
+            )
 
 
 if __name__ == '__main__':

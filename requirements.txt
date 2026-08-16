@@ -5,4 +5,5 @@ cryptography==46.0.3
 pyOpenSSL==25.3.0
 ruff==0.14.6
 inflection
+oss2>=2.19.1
 twine

@@ -5,6 +5,8 @@ from openapi.providers.media_generation.models import (
     AvatarListOutput,
     AvatarOutput,
     DigitalHumanRequest,
+    FileUploadOutput,
+    FileUploadRequest,
     ImageValidationOutput,
     MediaOutput,
     ModelResult,
@@ -25,3 +27,7 @@ class AvatarCloneCapability(Protocol):
 
 class AvatarListCapability(Protocol):
     def list_avatars(self, *, page: int, size: int) -> ModelResult[AvatarListOutput]: ...
+
+
+class FileUploadCapability(Protocol):
+    def upload_file(self, request: FileUploadRequest) -> ModelResult[FileUploadOutput]: ...

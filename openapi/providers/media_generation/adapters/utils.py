@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 
 from pydantic import SecretStr
 
-from openapi.providers.media_generation.exceptions import ProviderAPIError
+from openapi.providers.media_generation.exceptions import ProviderAPIError, ProviderErrorClassification
 from openapi.providers.media_generation.models import TextOptimizationAction, TextOptimizationRequest
 
 
@@ -13,9 +13,29 @@ def secret_value(value: Optional[SecretStr]) -> Optional[str]:
     return value.get_secret_value() if value is not None else None
 
 
+def terminal_error_fields(
+    error: Optional[ProviderErrorClassification],
+    error_code: Optional[str],
+    error_message: Optional[str],
+) -> Dict[str, Any]:
+    """Assemble the terminal-state error fields shared by all task adapters."""
+    return {
+        'error_kind': error.code if error else None,
+        'error_code': error_code,
+        'error_message': error_message,
+        'retryable': error.retryable if error else False,
+        'fallback_allowed': error.fallback_allowed if error else False,
+    }
+
+
 def require_public_url(value: str, field: str) -> None:
     if not value.startswith(('http://', 'https://')):
         raise ValueError(f'{field} must be a public HTTP/HTTPS URL')
+
+
+def require_image_reference(value: str, field: str) -> None:
+    if not value.startswith(('http://', 'https://', 'data:image/')):
+        raise ValueError(f'{field} must be a public HTTP/HTTPS URL or image data URI')
 
 
 def extract_urls(value: Any) -> list:

@@ -8,14 +8,18 @@ from openapi.providers.media_generation.adapters.utils import (
     extract_chat_text,
     extract_urls,
     parse_json_object,
+    require_image_reference,
     require_public_url,
     secret_value,
+    terminal_error_fields,
     text_optimization_messages,
 )
 from openapi.providers.media_generation.exceptions import (
     ConfigurationError,
     ProviderAPIError,
+    ProviderErrorCode,
     UnsupportedCapabilityError,
+    classify_provider_error,
 )
 from openapi.providers.media_generation.models import (
     AudioOutput,
@@ -163,6 +167,10 @@ class VolcengineAdapter:
         )
 
     def preflight_text_to_speech(self, request: TextToSpeechRequest) -> None:
+        if request.reference_audio is not None:
+            raise UnsupportedCapabilityError('volcengine does not support reference_audio for text_to_speech')
+        if not request.voice.strip():
+            raise ValueError('voice is required for volcengine text_to_speech')
         if self.config.speech is None:
             raise ConfigurationError('volcengine speech configuration is required for text_to_speech')
 
@@ -177,6 +185,8 @@ class VolcengineAdapter:
     ) -> ModelResult[MediaOutput]:
         if require_image and not request.images:
             raise ValueError('images must contain at least one image for image_to_image')
+        for image in request.images:
+            require_image_reference(image, 'images')
         body = dict(request.parameters)
         body.update({'model': request.model or self.config.image_model, 'prompt': request.prompt})
         if request.images:
@@ -187,6 +197,10 @@ class VolcengineAdapter:
             body['seed'] = request.seed
         if request.watermark is not None:
             body['watermark'] = request.watermark
+        if request.negative_prompt:
+            body['negative_prompt'] = request.negative_prompt
+        if request.strength is not None:
+            body['strength'] = request.strength
         if request.n > 1:
             body['sequential_image_generation'] = 'auto'
             body['sequential_image_generation_options'] = {'max_images': request.n}
@@ -205,26 +219,43 @@ class VolcengineAdapter:
         )
 
     def image_to_video(self, request: ImageToVideoRequest) -> ModelResult[MediaOutput]:
+        require_image_reference(request.image, 'image')
         content = []
         if request.prompt:
             content.append({'type': 'text', 'text': request.prompt})
         content.append({'type': 'image_url', 'image_url': {'url': request.image}, 'role': 'first_frame'})
         if request.last_image:
+            require_image_reference(request.last_image, 'last_image')
             content.append({'type': 'image_url', 'image_url': {'url': request.last_image}, 'role': 'last_frame'})
         if request.audio_url:
+            require_public_url(request.audio_url, 'audio_url')
             content.append({'type': 'audio_url', 'audio_url': {'url': request.audio_url}, 'role': 'reference_audio'})
         body = dict(request.parameters)
         body.update({'model': request.model or self.config.video_model, 'content': content})
-        for key in ('duration', 'resolution', 'ratio', 'seed', 'watermark'):
+        for key in ('duration', 'resolution', 'ratio', 'seed', 'watermark', 'prompt_extend'):
             value = getattr(request, key)
             if value is not None:
-                body[key] = value
+                # Ark expects lowercase resolution values ('720p'); the SDK keeps '720P' canonical.
+                body[key] = value.lower() if key == 'resolution' else value
+        if request.negative_prompt:
+            body['negative_prompt'] = request.negative_prompt
         payload = self.transport.request(
             'POST', f'{self.ark_base_url}/contents/generations/tasks', headers=self._ark_headers(), json_body=body
         )
         task_id = payload.get('id') or payload.get('task_id')
         if not task_id:
-            raise ProviderAPIError('volcengine video submission did not return a task id')
+            provider_code = self._error_value(payload, 'code')
+            provider_message = self._error_value(payload, 'message')
+            if provider_code or provider_message:
+                raise ProviderAPIError.from_provider_response(
+                    f'volcengine video submission failed: {provider_message or provider_code}',
+                    provider_code=provider_code,
+                )
+            raise ProviderAPIError(
+                'volcengine video submission did not return a task id',
+                code=ProviderErrorCode.INVALID_RESPONSE,
+                remote_task_may_exist=True,
+            )
         ref = TaskRef(
             provider=ModelProvider.VOLCENGINE,
             operation=ModelOperation.IMAGE_TO_VIDEO,
@@ -261,6 +292,10 @@ class VolcengineAdapter:
             raise ValueError('image_url and audio_url are required for volcengine OmniHuman')
         require_public_url(request.image_url, 'image_url')
         require_public_url(request.audio_url, 'audio_url')
+        if request.resolution is not None or request.ratio is not None:
+            raise UnsupportedCapabilityError(
+                'volcengine OmniHuman derives output resolution and ratio from the source image'
+            )
         model = request.model or self.config.digital_human_model
         body = dict(request.parameters)
         body.update(
@@ -273,11 +308,15 @@ class VolcengineAdapter:
         )
         if request.seed is not None:
             body['seed'] = request.seed
-        payload = self._call_visual('cv_sync2async_submit_task', body)
+        payload = self._call_visual('cv_sync2async_submit_task', body, submission=True)
         self._ensure_visual_success(payload)
         task_id = (payload.get('data') or {}).get('task_id')
         if not task_id:
-            raise ProviderAPIError('volcengine OmniHuman submission did not return a task id')
+            raise ProviderAPIError(
+                'volcengine OmniHuman submission did not return a task id',
+                code=ProviderErrorCode.INVALID_RESPONSE,
+                remote_task_may_exist=True,
+            )
         ref = TaskRef(
             provider=ModelProvider.VOLCENGINE,
             operation=ModelOperation.DIGITAL_HUMAN,
@@ -300,9 +339,17 @@ class VolcengineAdapter:
                 f'{self.ark_base_url}/contents/generations/tasks/{task_ref.task_id}',
                 query=True,
                 headers=self._ark_headers(),
+                remote_task_may_exist=True,
             )
             status = self._ark_status(payload.get('status'))
             urls = extract_urls(payload.get('content'))
+            error_code = self._error_value(payload, 'code')
+            error_message = self._error_value(payload, 'message')
+            error = (
+                classify_provider_error(provider_code=error_code, message=error_message or '')
+                if status == ModelStatus.FAILED
+                else None
+            )
             return ModelResult[MediaOutput](
                 provider=ModelProvider.VOLCENGINE,
                 operation=task_ref.operation,
@@ -311,8 +358,7 @@ class VolcengineAdapter:
                 task_ref=task_ref,
                 output=MediaOutput(urls=urls) if status == ModelStatus.SUCCEEDED else None,
                 data=payload,
-                error_code=self._error_value(payload, 'code'),
-                error_message=self._error_value(payload, 'message'),
+                **terminal_error_fields(error, error_code, error_message),
             )
         if task_ref.operation != ModelOperation.DIGITAL_HUMAN:
             raise UnsupportedCapabilityError(
@@ -323,13 +369,20 @@ class VolcengineAdapter:
             {'req_key': task_ref.model or self.config.digital_human_model, 'task_id': task_ref.task_id},
             query=True,
         )
-        self._ensure_visual_success(payload)
+        self._ensure_visual_success(payload, remote_task_may_exist=True)
         data = dict(payload.get('data') or {})
         detail = parse_json_object(data.get('resp_data'))
         if detail:
             data['detail'] = detail
         status = self._visual_status(data.get('status') or detail.get('status'))
         urls = extract_urls(data)
+        error_code = self._string(data.get('code') or detail.get('code'))
+        error_message = str(data.get('message') or '') or None
+        error = (
+            classify_provider_error(provider_code=error_code, message=error_message or '')
+            if status == ModelStatus.FAILED
+            else None
+        )
         return ModelResult[MediaOutput](
             provider=ModelProvider.VOLCENGINE,
             operation=task_ref.operation,
@@ -338,10 +391,16 @@ class VolcengineAdapter:
             task_ref=task_ref,
             output=MediaOutput(urls=urls) if status == ModelStatus.SUCCEEDED else None,
             data=payload,
-            error_message=str(data.get('message') or '') or None,
+            **terminal_error_fields(error, error_code, error_message),
         )
 
-    def _call_visual(self, method: str, body: Dict[str, Any], query: bool = False) -> Dict[str, Any]:
+    def _call_visual(
+        self,
+        method: str,
+        body: Dict[str, Any],
+        query: bool = False,
+        submission: bool = False,
+    ) -> Dict[str, Any]:
         service = self._require_visual()
         attempts = self.transport.max_query_retries + 1 if query else 1
         payload = None
@@ -354,25 +413,52 @@ class VolcengineAdapter:
                 if query and is_transient and attempt + 1 < attempts:
                     self.transport.sleep(0.5 * (2**attempt))
                     continue
-                raise ProviderAPIError(
-                    f'volcengine visual API request failed: {self.transport.redact(exc)}'
-                ) from exc
+                message = f'volcengine visual API request failed: {self.transport.redact(exc)}'
+                if isinstance(status, int):
+                    error = ProviderAPIError.from_provider_response(
+                        message,
+                        http_status=status,
+                        remote_task_may_exist=query,
+                    )
+                else:
+                    error = ProviderAPIError(
+                        message,
+                        code=ProviderErrorCode.NETWORK_ERROR,
+                        retryable=True,
+                        fallback_allowed=not (query or submission),
+                        remote_task_may_exist=query or submission,
+                    )
+                raise error from exc
             break
         assert payload is not None
         if isinstance(payload, str):
             try:
                 payload = json.loads(payload)
             except ValueError as exc:
-                raise ProviderAPIError('volcengine visual API returned invalid JSON') from exc
+                raise ProviderAPIError(
+                    'volcengine visual API returned invalid JSON',
+                    code=ProviderErrorCode.INVALID_RESPONSE,
+                    retryable=query,
+                    remote_task_may_exist=query or submission,
+                ) from exc
         if not isinstance(payload, dict):
-            raise ProviderAPIError('volcengine visual API returned an invalid response object')
+            raise ProviderAPIError(
+                'volcengine visual API returned an invalid response object',
+                code=ProviderErrorCode.INVALID_RESPONSE,
+                retryable=query,
+                remote_task_may_exist=query or submission,
+            )
         return payload
 
     @staticmethod
-    def _ensure_visual_success(payload: Dict[str, Any]):
+    def _ensure_visual_success(payload: Dict[str, Any], *, remote_task_may_exist: bool = False):
         if payload.get('code') not in (None, 0, 10000):
-            raise ProviderAPIError(
-                f'volcengine visual API error {payload.get("code")}: {payload.get("message") or "unknown error"}'
+            provider_code = str(payload.get('code'))
+            message = str(payload.get('message') or 'unknown error')
+            raise ProviderAPIError.from_provider_response(
+                f'volcengine visual API error {provider_code}: {message}',
+                provider_code=provider_code,
+                remote_task_may_exist=remote_task_may_exist,
             )
 
     @staticmethod
@@ -412,4 +498,8 @@ class VolcengineAdapter:
     def _error_value(payload: Dict[str, Any], key: str) -> Optional[str]:
         error = payload.get('error')
         value = error.get(key) if isinstance(error, dict) else None
+        return str(value) if value is not None else None
+
+    @staticmethod
+    def _string(value: Any) -> Optional[str]:
         return str(value) if value is not None else None

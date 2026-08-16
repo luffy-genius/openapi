@@ -5,12 +5,17 @@ from openapi.providers.media_generation.capabilities import (
     AvatarCloneCapability,
     AvatarListCapability,
     DigitalHumanCapability,
+    FileUploadCapability,
     ImageCapability,
     ImageValidationCapability,
     SpeechCapability,
+    SpeechTranscriptionCapability,
     TaskCapability,
     TextCapability,
     VideoCapability,
+    VoiceCloneCapability,
+    VoiceDesignCapability,
+    VoiceListCapability,
 )
 from openapi.providers.media_generation.exceptions import ConfigurationError, UnsupportedCapabilityError
 from openapi.providers.media_generation.models import ModelProvider
@@ -19,6 +24,11 @@ from openapi.providers.media_generation.models import ModelProvider
 class Capability(TextChoices):
     TEXT = 'text', '文本'
     SPEECH = 'speech', '语音'
+    SPEECH_TRANSCRIPTION = 'speech transcription', '语音识别'
+    VOICE_CLONE = 'voice clone', '声音复刻'
+    VOICE_DESIGN = 'voice design', '音色设计'
+    VOICE_LIST = 'voice list', '声音列表'
+    FILE_UPLOAD = 'file upload', '文件上传'
     IMAGE = 'image', '图片'
     VIDEO = 'video', '视频'
     IMAGE_VALIDATION = 'image validation', '图片校验'
@@ -47,6 +57,21 @@ class ProviderRegistry:
 
     def speech(self, provider: Union[ModelProvider, str]) -> SpeechCapability:
         return cast(SpeechCapability, self._get(provider, Capability.SPEECH))
+
+    def speech_transcription(self, provider: Union[ModelProvider, str]) -> SpeechTranscriptionCapability:
+        return cast(SpeechTranscriptionCapability, self._get(provider, Capability.SPEECH_TRANSCRIPTION))
+
+    def voice_clone(self, provider: Union[ModelProvider, str]) -> VoiceCloneCapability:
+        return cast(VoiceCloneCapability, self._get(provider, Capability.VOICE_CLONE))
+
+    def voice_design(self, provider: Union[ModelProvider, str]) -> VoiceDesignCapability:
+        return cast(VoiceDesignCapability, self._get(provider, Capability.VOICE_DESIGN))
+
+    def voice_list(self, provider: Union[ModelProvider, str]) -> VoiceListCapability:
+        return cast(VoiceListCapability, self._get(provider, Capability.VOICE_LIST))
+
+    def file_upload(self, provider: Union[ModelProvider, str]) -> FileUploadCapability:
+        return cast(FileUploadCapability, self._get(provider, Capability.FILE_UPLOAD))
 
     def image(self, provider: Union[ModelProvider, str]) -> ImageCapability:
         return cast(ImageCapability, self._get(provider, Capability.IMAGE))

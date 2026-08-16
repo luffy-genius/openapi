@@ -58,7 +58,7 @@ class TranslateToSpeechWorkflow:
                 speech_request.model_copy(update={'text': translation.output.text})
             )
         except ProviderAPIError as exc:
-            raise ProviderAPIError(
+            raise exc.with_message(
                 'translation succeeded but speech generation failed; the translation request may already have '
                 f'been billed: {exc}'
             ) from exc
@@ -74,6 +74,9 @@ class TranslateToSpeechWorkflow:
             task_ref=task_ref,
             output=speech.output,
             data={'translation': translation.data, 'speech': speech.data},
+            error_kind=speech.error_kind,
             error_code=speech.error_code,
             error_message=speech.error_message,
+            retryable=speech.retryable,
+            fallback_allowed=speech.fallback_allowed,
         )

@@ -5,6 +5,8 @@ from openapi.providers.media_generation.models import (
     AvatarListOutput,
     AvatarOutput,
     DigitalHumanRequest,
+    FileUploadOutput,
+    FileUploadRequest,
     ImageValidationOutput,
     MediaOutput,
     ModelProvider,
@@ -51,3 +53,12 @@ class AvatarDomain:
         require_positive_integer(page, 'page')
         require_positive_integer(size, 'size')
         return self._registry.avatar_list(provider).list_avatars(page=page, size=size)
+
+    def upload(
+        self,
+        request: Union[FileUploadRequest, Dict[str, Any]],
+        *,
+        provider: Union[ModelProvider, str],
+    ) -> ModelResult[FileUploadOutput]:
+        normalized = coerce_model(request, FileUploadRequest)
+        return self._registry.file_upload(provider).upload_file(normalized)

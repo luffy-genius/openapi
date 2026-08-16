@@ -23,6 +23,7 @@ from openapi.providers.media_generation import (
     ModelProvider,
     ModelResult,
     ModelStatus,
+    SiliconFlowConfig,
     TaskRef,
     TextOutput,
     VolcengineConfig,
@@ -108,6 +109,14 @@ def provider_config(provider: ModelProvider, capability: str):
         else:
             raise ExampleError(f'unsupported volcengine capability: {capability}')
         return VolcengineConfig(**values)
+    if provider == ModelProvider.SILICONFLOW:
+        return SiliconFlowConfig(
+            api_key=env_string('MEDIA_SILICONFLOW_API_KEY', required=True),
+            **optional_values(
+                base_url=env_string('MEDIA_SILICONFLOW_BASE_URL'),
+                default_voice=env_string('MEDIA_SILICONFLOW_VOICE'),
+            ),
+        )
     raise ExampleError(f'unsupported provider: {provider.value}')
 
 

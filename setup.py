@@ -32,7 +32,11 @@ setup(
     packages=find_packages(exclude=('examples', 'examples.*')),
     include_package_data=True,
     zip_safe=True,
+    python_requires='>=3.10',
     install_requires=['httpx', 'pydantic>=2,<3', 'pycryptodome', 'cryptography'],
-    extras_require={'media-generation': ['volcengine']},
+    extras_require={
+        'media-generation': ['volcengine'],
+        'aliyun-oss': ['oss2>=2.19.1'],
+    },
     entry_points={'console_scripts': []},
 )

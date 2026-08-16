@@ -1,6 +1,10 @@
+import base64
 import importlib.util
+import io
 import json
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import httpx
@@ -17,6 +21,7 @@ from openapi.providers.media_generation import (
     ConfigurationError,
     DeepSeekConfig,
     DigitalHumanRequest,
+    FileUploadRequest,
     GenerationTimeoutError,
     HiFlyConfig,
     ImageGenerationRequest,
@@ -29,6 +34,9 @@ from openapi.providers.media_generation import (
     ModelResult,
     ModelStatus,
     ProviderAPIError,
+    ProviderErrorCode,
+    SiliconFlowConfig,
+    SpeechTranscriptionRequest,
     TaskRef,
     TextOptimizationAction,
     TextOptimizationRequest,
@@ -37,8 +45,11 @@ from openapi.providers.media_generation import (
     TextToSpeechRequest,
     TranslateToSpeechRequest,
     UnsupportedCapabilityError,
+    VoiceCloneRequest,
+    VoiceDesignRequest,
     VolcengineConfig,
     VolcengineSpeechConfig,
+    classify_provider_error,
 )
 from openapi.providers.media_generation.registry import Capability
 
@@ -56,7 +67,8 @@ class RecordingTransport:
         if response[0] == 'read_timeout':
             raise httpx.ReadTimeout(response[1], request=request)
         status, payload, *headers = response
-        return httpx.Response(status, json=payload, headers=headers[0] if headers else None, request=request)
+        kwargs = {'content': payload} if isinstance(payload, bytes) else {'json': payload}
+        return httpx.Response(status, headers=headers[0] if headers else None, request=request, **kwargs)
 
 
 def make_client(transport, **configs):
@@ -100,6 +112,7 @@ class ModelTests(unittest.TestCase):
                 ('aliyun', '阿里云百炼'),
                 ('hifly', '飞影 HiFly'),
                 ('deepseek', 'DeepSeek'),
+                ('siliconflow', 'SiliconFlow'),
             ],
         )
         self.assertEqual(
@@ -118,6 +131,9 @@ class ModelTests(unittest.TestCase):
             [
                 ('text_optimization', '文本优化'),
                 ('text_to_speech', '文本转语音'),
+                ('speech_to_text', '语音转文字'),
+                ('voice_clone', '声音复刻'),
+                ('voice_design', '音色设计'),
                 ('translate_to_speech', '翻译后转语音'),
                 ('text_to_image', '文生图'),
                 ('image_to_image', '图生图'),
@@ -126,6 +142,8 @@ class ModelTests(unittest.TestCase):
                 ('digital_human', '数字人生成'),
                 ('avatar_clone', '形象克隆'),
                 ('avatar_list', '形象列表'),
+                ('voice_list', '声音列表'),
+                ('file_upload', '文件上传'),
             ],
         )
         self.assertEqual(
@@ -151,6 +169,11 @@ class ModelTests(unittest.TestCase):
             [
                 ('text', '文本'),
                 ('speech', '语音'),
+                ('speech transcription', '语音识别'),
+                ('voice clone', '声音复刻'),
+                ('voice design', '音色设计'),
+                ('voice list', '声音列表'),
+                ('file upload', '文件上传'),
                 ('image', '图片'),
                 ('video', '视频'),
                 ('image validation', '图片校验'),
@@ -246,6 +269,72 @@ class ModelTests(unittest.TestCase):
         ):
             with self.subTest(field=field, value=value), self.assertRaises(ValidationError):
                 AudioConfig(**{field: value})
+
+    def test_media_requests_validate_public_contract_and_protect_typed_fields(self):
+        with self.assertRaises(ValidationError):
+            ImageGenerationRequest(prompt=' ', n=1)
+        with self.assertRaises(ValidationError):
+            ImageGenerationRequest(prompt='cat', n=5)
+        with self.assertRaisesRegex(ValidationError, 'reserved fields'):
+            ImageGenerationRequest(prompt='cat', n=2, parameters={'n': 4})
+        with self.assertRaises(ValidationError):
+            ImageToVideoRequest(image='https://in/image.png', duration=16)
+        with self.assertRaisesRegex(ValidationError, 'reserved fields'):
+            ImageToVideoRequest(image='https://in/image.png', parameters={'resolution': '720P'})
+        with self.assertRaisesRegex(ValidationError, 'Extra inputs'):
+            DigitalHumanRequest(avatar='avatar', unknown_setting=True)
+
+    def test_text_to_speech_reference_validation(self):
+        with self.assertRaisesRegex(ValidationError, 'mutually exclusive'):
+            TextToSpeechRequest(text='text', model='tts', voice='voice', reference_audio=b'audio')
+        with self.assertRaisesRegex(ValidationError, 'reference_text'):
+            TextToSpeechRequest(text='text', model='tts', reference_audio=b'audio', reference_text=' ')
+        request = TextToSpeechRequest(text='text', model='tts', reference_audio=b'audio', reference_text='原文')
+        self.assertEqual(request.voice, '')
+        # Neither voice nor reference_audio is fine; providers fall back to default_voice.
+        self.assertEqual(TextToSpeechRequest(text='text', model='tts').voice, '')
+
+    def test_avatar_clone_request_sources_and_model_coercion(self):
+        for kwargs in (
+            {},
+            {'image_url': 'u', 'video_url': 'v'},
+            {'image_file_id': 'f', 'video_file_id': 'g'},
+            {'image_url': 'u', 'image_file_id': 'f'},
+        ):
+            with self.subTest(kwargs=kwargs), self.assertRaisesRegex(ValidationError, 'exactly one'):
+                AvatarCloneRequest(title='t', **kwargs)
+        request = AvatarCloneRequest(image_file_id='file-1', model='3')
+        self.assertEqual(request.model, 3)
+        self.assertIsNone(AvatarCloneRequest(image_url='https://in/a.jpg').model)
+
+    def test_speech_transcription_file_urls_cap(self):
+        request = SpeechTranscriptionRequest(file_urls=['https://in/video.mp4'])
+        self.assertEqual(len(request.file_urls), 1)
+        with self.assertRaises(ValidationError):
+            SpeechTranscriptionRequest(file_urls=['https://in/a.mp4', 'https://in/b.mp4'])
+
+    def test_siliconflow_config_boundaries(self):
+        config = SiliconFlowConfig(api_key='key')
+        self.assertEqual(config.base_url, 'https://api.siliconflow.cn/v1')
+        with self.assertRaisesRegex(ValidationError, 'HTTPS'):
+            SiliconFlowConfig(api_key='key', base_url='http://api.example.com')
+        for field, value in (('speed', 0.24), ('speed', 4.01), ('gain', -10.01), ('gain', 10.01)):
+            with self.subTest(field=field, value=value), self.assertRaises(ValidationError):
+                SiliconFlowConfig(api_key='key', **{field: value})
+
+    def test_classify_provider_error_normalises_camel_case_and_separators(self):
+        cases = {
+            'DataInspectionFailed': ProviderErrorCode.CONTENT_REJECTED,
+            'InvalidApiKey': ProviderErrorCode.AUTH_FAILED,
+            'RateLimitExceeded': ProviderErrorCode.RATE_LIMITED,
+            'PermissionDenied': ProviderErrorCode.OWNERSHIP_ERROR,
+            'ContentFiltered': ProviderErrorCode.CONTENT_REJECTED,
+            'internal-error': ProviderErrorCode.SERVICE_UNAVAILABLE,
+        }
+        for provider_code, expected in cases.items():
+            with self.subTest(provider_code=provider_code):
+                classification = classify_provider_error(provider_code=provider_code)
+                self.assertEqual(classification.code, expected)
 
     def test_task_ref_json_and_legacy_operation_restore(self):
         old = '{"provider":"aliyun","operation":"image_generation","task_id":"old-task"}'
@@ -379,6 +468,287 @@ class TextOptimizationTests(unittest.TestCase):
 
 
 class SpeechTests(unittest.TestCase):
+    def test_aliyun_transcription_task_and_standardized_text(self):
+        transport = RecordingTransport(
+            [
+                (200, {'output': {'task_id': 'asr-1', 'task_status': 'PENDING'}}),
+                (
+                    200,
+                    {
+                        'output': {
+                            'task_status': 'SUCCEEDED',
+                            'results': [{'transcription_url': 'https://out/transcript.json'}],
+                        }
+                    },
+                ),
+                (200, {'transcripts': [{'text': '第一段'}, {'text': '第二段'}]}),
+            ]
+        )
+        media, client = make_client(
+            transport,
+            aliyun=AliyunConfig(api_key='ali-key', workspace_id='workspace', asr_model='paraformer-v2'),
+        )
+        self.addCleanup(client.close)
+
+        submitted = media.speech.transcribe(
+            SpeechTranscriptionRequest(
+                file_urls=['https://in/video.mp4'], parameters={'language_hints': ['zh']}
+            ),
+            provider='aliyun',
+        )
+        restored = TaskRef.from_json(submitted.task_ref.to_json())
+        completed = media.task.get(restored)
+
+        submit = transport.requests[0]
+        self.assertEqual(submit.url.host, 'workspace.cn-beijing.maas.aliyuncs.com')
+        self.assertEqual(submit.url.path, '/api/v1/services/audio/asr/transcription')
+        self.assertEqual(submit.headers['x-dashscope-async'], 'enable')
+        submit_body = json.loads(submit.content)
+        self.assertEqual(submit_body['model'], 'paraformer-v2')
+        self.assertEqual(submit_body['input'], {'file_urls': ['https://in/video.mp4']})
+        self.assertEqual(submit_body['parameters'], {'language_hints': ['zh']})
+        self.assertEqual(transport.requests[1].url.host, 'workspace.cn-beijing.maas.aliyuncs.com')
+        self.assertEqual(transport.requests[1].url.path, '/api/v1/tasks/asr-1')
+        self.assertEqual(completed.output.text, '第一段\n第二段')
+
+    def test_aliyun_transcription_download_retries_and_never_falls_back(self):
+        retrying = RecordingTransport(
+            [
+                (200, {'output': {'task_id': 'asr-1', 'task_status': 'PENDING'}}),
+                (
+                    200,
+                    {
+                        'output': {
+                            'task_status': 'SUCCEEDED',
+                            'results': [{'transcription_url': 'https://out/transcript.json'}],
+                        }
+                    },
+                ),
+                (503, {'message': 'temporary'}),
+                (200, {'transcripts': [{'text': '重试成功'}]}),
+            ]
+        )
+        media, client = make_client(retrying, aliyun=AliyunConfig(api_key='key', workspace_id='workspace'))
+        self.addCleanup(client.close)
+        submitted = media.speech.transcribe(
+            SpeechTranscriptionRequest(file_urls=['https://in/video.mp4']), provider='aliyun'
+        )
+        completed = media.task.get(submitted.task_ref)
+        self.assertEqual(completed.output.text, '重试成功')
+        self.assertEqual(len(retrying.requests), 4)
+
+        exhausted = RecordingTransport(
+            [
+                (200, {'output': {'task_id': 'asr-2', 'task_status': 'PENDING'}}),
+                (
+                    200,
+                    {
+                        'output': {
+                            'task_status': 'SUCCEEDED',
+                            'results': [{'transcription_url': 'https://out/transcript.json'}],
+                        }
+                    },
+                ),
+            ]
+            + [(503, {'message': 'temporary'})] * 4
+        )
+        media, client = make_client(exhausted, aliyun=AliyunConfig(api_key='key', workspace_id='workspace'))
+        self.addCleanup(client.close)
+        submitted = media.speech.transcribe(
+            SpeechTranscriptionRequest(file_urls=['https://in/video.mp4']), provider='aliyun'
+        )
+        with self.assertRaises(ProviderAPIError) as raised:
+            media.task.get(submitted.task_ref)
+        error = raised.exception
+        self.assertEqual(error.code, ProviderErrorCode.SERVICE_UNAVAILABLE)
+        self.assertFalse(error.fallback_allowed)
+        self.assertTrue(error.remote_task_may_exist)
+        self.assertEqual(len(exhausted.requests), 6)
+
+    def test_aliyun_voice_clone_and_design_preview(self):
+        transport = RecordingTransport(
+            [
+                (200, {'request_id': 'clone-request', 'output': {'voice_id': 'voice-clone'}}),
+                (
+                    200,
+                    {
+                        'request_id': 'design-request',
+                        'output': {
+                            'voice_id': 'voice-design',
+                            'target_model': 'cosyvoice-v3.5-plus',
+                            'preview_audio': {'data': 'UklGRg==', 'response_format': 'wav'},
+                        },
+                    },
+                ),
+            ]
+        )
+        media, client = make_client(
+            transport,
+            aliyun=AliyunConfig(api_key='ali-key', workspace_id='workspace'),
+        )
+        self.addCleanup(client.close)
+
+        cloned = media.speech.clone_voice(
+            VoiceCloneRequest(audio_url='https://in/sample.wav', prefix='用户 123', language='zh'),
+            provider='aliyun',
+        )
+        designed = media.speech.design_voice(
+            VoiceDesignRequest(
+                prompt='温暖的女声',
+                preview_text='你好',
+                prefix='preview',
+                target_model='cosyvoice-v3.5-plus',
+            ),
+            provider='aliyun',
+        )
+
+        clone_body = json.loads(transport.requests[0].content)
+        design_body = json.loads(transport.requests[1].content)
+        self.assertEqual(clone_body['input']['prefix'], '123')
+        self.assertEqual(cloned.output.voice_id, 'voice-clone')
+        self.assertEqual(cloned.output.request_id, 'clone-request')
+        self.assertEqual(design_body['parameters'], {'sample_rate': 24000, 'response_format': 'wav'})
+        self.assertEqual(designed.output.model, 'cosyvoice-v3.5-plus')
+        self.assertEqual(designed.output.preview_audio.audio_base64, 'UklGRg==')
+
+    def test_siliconflow_reference_audio_and_binary_speech(self):
+        transport = RecordingTransport([(200, b'ID3-audio', {'content-type': 'audio/mpeg'})])
+        media, client = make_client(transport, siliconflow=SiliconFlowConfig(api_key='sf-secret'))
+        self.addCleanup(client.close)
+
+        result = media.speech.synthesize(
+            TextToSpeechRequest(
+                text='待合成文本',
+                model='FunAudioLLM/CosyVoice2-0.5B',
+                reference_audio=b'RIFF-reference',
+                reference_content_type='audio/wav',
+                reference_text='参考文本',
+            ),
+            provider='siliconflow',
+        )
+
+        self.assertEqual(len(transport.requests), 1)
+        self.assertEqual(str(transport.requests[0].url), 'https://api.siliconflow.cn/v1/audio/speech')
+        self.assertNotIn(b'sf-secret', transport.requests[0].content)
+        speech_body = json.loads(transport.requests[0].content)
+        self.assertEqual(speech_body['model'], 'FunAudioLLM/CosyVoice2-0.5B')
+        self.assertEqual(speech_body['input'], '待合成文本')
+        self.assertIs(speech_body['stream'], False)
+        self.assertNotIn('voice', speech_body)
+        self.assertEqual(speech_body['references'][0]['text'], '参考文本')
+        expected_audio = f'data:audio/wav;base64,{base64.b64encode(b"RIFF-reference").decode()}'
+        self.assertEqual(speech_body['references'][0]['audio'], expected_audio)
+        self.assertEqual(base64.b64decode(result.output.audio_base64), b'ID3-audio')
+        self.assertEqual(result.output.format, 'mpeg')
+
+    def test_siliconflow_downloads_audio_url_response(self):
+        transport = RecordingTransport(
+            [
+                (200, {'data': {'url': 'https://audio.example.test/result.wav'}}),
+                (200, b'RIFF-audio', {'content-type': 'audio/wav'}),
+            ]
+        )
+        media, client = make_client(
+            transport,
+            siliconflow=SiliconFlowConfig(
+                api_key='sf-secret',
+                base_url='https://tts.example.test/v1',
+                default_voice='voice-1',
+            ),
+        )
+        self.addCleanup(client.close)
+
+        result = media.speech.synthesize(
+            TextToSpeechRequest(text='hello', model='speech-model'),
+            provider='siliconflow',
+        )
+
+        speech_body = json.loads(transport.requests[0].content)
+        self.assertEqual(str(transport.requests[0].url), 'https://tts.example.test/v1/audio/speech')
+        self.assertEqual(speech_body['voice'], 'voice-1')
+        self.assertIs(speech_body['stream'], False)
+        self.assertEqual(result.output.urls, ['https://audio.example.test/result.wav'])
+        self.assertEqual(base64.b64decode(result.output.audio_base64), b'RIFF-audio')
+        self.assertEqual(str(transport.requests[1].url), 'https://audio.example.test/result.wav')
+
+    def test_siliconflow_rejects_invalid_speech_options_before_request(self):
+        for kwargs in (
+            {'response_format': 'flac'},
+            {'response_format': 'ogg'},
+            {'sample_rate': 12000},
+        ):
+            with self.subTest(kwargs=kwargs):
+                transport = RecordingTransport([])
+                media, client = make_client(transport, siliconflow=SiliconFlowConfig(api_key='key', **kwargs))
+                self.addCleanup(client.close)
+                with self.assertRaisesRegex(ValueError, 'response_format|sample_rate'):
+                    media.speech.synthesize(
+                        TextToSpeechRequest(text='text', model='model', voice='voice'),
+                        provider='siliconflow',
+                    )
+                self.assertEqual(len(transport.requests), 0)
+
+    def test_siliconflow_sample_rate_format_combos(self):
+        for kwargs in (
+            {'response_format': 'opus'},  # default sample_rate 44100 is not valid for opus
+            {'response_format': 'mp3', 'sample_rate': 48000},
+        ):
+            with self.subTest(kwargs=kwargs):
+                transport = RecordingTransport([])
+                media, client = make_client(transport, siliconflow=SiliconFlowConfig(api_key='key', **kwargs))
+                self.addCleanup(client.close)
+                with self.assertRaisesRegex(ValueError, 'not supported for response_format'):
+                    media.speech.synthesize(
+                        TextToSpeechRequest(text='text', model='model', voice='voice'),
+                        provider='siliconflow',
+                    )
+                self.assertEqual(len(transport.requests), 0)
+
+        for kwargs in (
+            {'response_format': 'mp3', 'sample_rate': 32000},
+            {'response_format': 'opus', 'sample_rate': 48000},
+        ):
+            with self.subTest(kwargs=kwargs):
+                transport = RecordingTransport([(200, b'ID3-audio', {'content-type': 'audio/mpeg'})])
+                media, client = make_client(transport, siliconflow=SiliconFlowConfig(api_key='key', **kwargs))
+                self.addCleanup(client.close)
+                result = media.speech.synthesize(
+                    TextToSpeechRequest(text='text', model='model', voice='voice'),
+                    provider='siliconflow',
+                )
+                self.assertEqual(result.output.audio_base64, base64.b64encode(b'ID3-audio').decode())
+
+    def test_siliconflow_reference_audio_requires_reference_text(self):
+        media, client = make_client(RecordingTransport([]), siliconflow=SiliconFlowConfig(api_key='key'))
+        self.addCleanup(client.close)
+        with self.assertRaisesRegex(ValueError, 'reference_text'):
+            media.speech.synthesize(
+                TextToSpeechRequest(text='text', model='model', reference_audio=b'audio'),
+                provider='siliconflow',
+            )
+
+    def test_other_providers_reject_reference_audio_before_request(self):
+        cases = {
+            'hifly': HiFlyConfig(token='token'),
+            'aliyun': AliyunConfig(api_key='key', workspace_id='workspace'),
+            'volcengine': VolcengineConfig(
+                speech=VolcengineSpeechConfig(app_id='app', access_token='token')
+            ),
+        }
+        for name, config in cases.items():
+            with self.subTest(name=name):
+                transport = RecordingTransport([])
+                media, client = make_client(transport, **{name: config})
+                self.addCleanup(client.close)
+                with self.assertRaises(UnsupportedCapabilityError):
+                    media.speech.synthesize(
+                        TextToSpeechRequest(
+                            text='text', model='model', reference_audio=b'audio', reference_text='原文'
+                        ),
+                        provider=name,
+                    )
+                self.assertEqual(len(transport.requests), 0)
+
     def test_volcengine_audio_config_base64_and_log_id(self):
         transport = RecordingTransport(
             [(200, {'code': 3000, 'data': 'BASE64_AUDIO', 'duration': 1200}, {'X-Tt-Logid': 'log-1'})]
@@ -550,6 +920,11 @@ class SpeechTests(unittest.TestCase):
         self.assertEqual(result.provider, ModelProvider.ALIYUN)
         self.assertEqual(result.output.urls, ['https://out/hello.wav'])
         self.assertEqual(set(result.data), {'translation', 'speech'})
+        self.assertIsNone(result.error_kind)
+        self.assertIsNone(result.error_code)
+        self.assertIsNone(result.error_message)
+        self.assertFalse(result.retryable)
+        self.assertFalse(result.fallback_allowed)
 
         async_transport = RecordingTransport(
             [
@@ -676,12 +1051,73 @@ class SpeechTests(unittest.TestCase):
             speech_model='qwen-tts',
             voice='voice',
         )
-        with self.assertRaisesRegex(ProviderAPIError, 'translation request may already have been billed'):
+        with self.assertRaisesRegex(ProviderAPIError, 'translation request may already have been billed') as raised:
             media.workflow.translate_to_speech(request, text_provider='deepseek', speech_provider='aliyun')
         self.assertEqual(len(transport.requests), 2)
+        error = raised.exception
+        self.assertEqual(error.code, ProviderErrorCode.SERVICE_UNAVAILABLE)
+        self.assertEqual(error.http_status, 500)
+        self.assertTrue(error.retryable)
+        self.assertTrue(error.fallback_allowed)
+        self.assertFalse(error.remote_task_may_exist)
 
 
 class MediaTests(unittest.TestCase):
+    def test_hifly_upload_voice_list_and_file_id_inputs(self):
+        transport = RecordingTransport(
+            [
+                (
+                    200,
+                    {
+                        'code': 0,
+                        'data': {
+                            'upload_url': 'https://upload.example.test/file',
+                            'file_id': 'file-1',
+                            'content_type': 'video/mp4',
+                        },
+                    },
+                ),
+                (200, {}),
+                (200, {'code': 0, 'data': [{'voice': 'voice-1'}]}),
+                (200, {'code': 0, 'data': {'task_id': 'avatar-task'}}),
+                (200, {'code': 0, 'data': {'task_id': 'video-task'}}),
+                (200, {'code': 0, 'data': {'task_id': 'voice-task'}}),
+                (200, {'code': 0, 'data': {'status': 3, 'voice': 'cloned-voice'}}),
+            ]
+        )
+        media, client = make_client(transport, hifly=HiFlyConfig(token='hifly-secret'))
+        self.addCleanup(client.close)
+
+        uploaded = media.avatar.upload(
+            FileUploadRequest(content=b'video-data', file_extension='.mp4', content_type='video/mp4'),
+            provider='hifly',
+        )
+        voices = media.speech.list_voices(provider='hifly', page=2, size=10)
+        avatar = media.avatar.clone(
+            AvatarCloneRequest(title='avatar', video_file_id=uploaded.output.file_id), provider='hifly'
+        )
+        video = media.avatar.render(
+            DigitalHumanRequest(avatar='avatar-1', file_id='audio-file'), provider='hifly'
+        )
+        voice = media.speech.clone_voice(
+            VoiceCloneRequest(title='voice', file_id='audio-file', language='zh'), provider='hifly'
+        )
+        completed = media.task.get(voice.task_ref)
+
+        self.assertEqual(transport.requests[1].method, 'PUT')
+        self.assertEqual(transport.requests[1].content, b'video-data')
+        self.assertNotIn('authorization', transport.requests[1].headers)
+        self.assertEqual(voices.output.items[0]['voice'], 'voice-1')
+        self.assertEqual(
+            dict(transport.requests[2].url.params), {'page': '2', 'size': '10', 'kind': '1'}
+        )
+        self.assertEqual(transport.requests[3].url.path, '/api/v2/hifly/avatar/create_by_video')
+        self.assertEqual(json.loads(transport.requests[3].content)['file_id'], 'file-1')
+        self.assertEqual(json.loads(transport.requests[4].content)['file_id'], 'audio-file')
+        self.assertEqual(avatar.task_ref.task_id, 'avatar-task')
+        self.assertEqual(video.task_ref.task_id, 'video-task')
+        self.assertEqual(completed.output.voice_id, 'cloned-voice')
+
     def test_volcengine_image_and_video_statuses(self):
         responses = [(200, {'data': [{'url': 'https://out/image.png'}]}), (200, {'id': 'video-1'})]
         for status in ('queued', 'running', 'succeeded', 'failed', 'expired', 'cancelled'):
@@ -756,11 +1192,34 @@ class MediaTests(unittest.TestCase):
         image = media.image.edit(
             ImageGenerationRequest(prompt='restyle', images=['data:image/png;base64,AA']), provider='aliyun'
         )
-        video = media.video.from_image(ImageToVideoRequest(image='https://in/image.png'), provider='aliyun')
+        video = media.video.from_image(
+            ImageToVideoRequest(
+                image='https://in/image.png',
+                last_image='https://in/last.png',
+                prompt='move',
+                duration=5,
+                resolution='1080P',
+                ratio='auto',
+                prompt_extend=True,
+                watermark=False,
+            ),
+            provider='aliyun',
+        )
         validation = media.avatar.validate_image('https://in/person.jpg', provider='aliyun')
         restored = TaskRef.from_json(video.task_ref.to_json())
         completed = media.task.get(restored)
         self.assertEqual(image.output.urls, ['https://out/image.png'])
+        video_body = json.loads(transport.requests[1].content)
+        self.assertEqual(
+            video_body['parameters'],
+            {
+                'duration': 5,
+                'resolution': '1080P',
+                'watermark': False,
+                'prompt_extend': True,
+            },
+        )
+        self.assertEqual(video_body['input']['media'][1]['type'], 'last_frame')
         self.assertTrue(validation.output.passed)
         self.assertEqual(completed.output.urls, ['https://out/video.mp4'])
 
@@ -806,7 +1265,8 @@ class MediaTests(unittest.TestCase):
             AvatarCloneRequest(title='avatar', image_url='https://in/person.jpg'), provider='hifly'
         )
         video = media.avatar.render(
-            DigitalHumanRequest(avatar='avatar-1', text='hello', voice='voice-1'), provider='hifly'
+            DigitalHumanRequest(avatar='avatar-1', text='hello', voice='voice-1'),
+            provider='hifly',
         )
         cloned = media.task.get(clone.task_ref)
         completed = media.task.get(video.task_ref)
@@ -817,8 +1277,146 @@ class MediaTests(unittest.TestCase):
         self.assertEqual((custom_page.output.page, custom_page.output.size), (3, 7))
         self.assertEqual(dict(transport.requests[0].url.params), {'page': '1', 'size': '20', 'kind': '2'})
         self.assertEqual(dict(transport.requests[1].url.params), {'page': '3', 'size': '7', 'kind': '2'})
+        render_body = json.loads(transport.requests[3].content)
+        self.assertNotIn('resolution', render_body)
+        self.assertNotIn('ratio', render_body)
         self.assertEqual(cloned.output.avatar_id, 'avatar-1')
         self.assertEqual(completed.output.urls, ['https://out/video.mp4'])
+
+    def test_hifly_avatar_clone_routes_image_and_video_file_ids(self):
+        transport = RecordingTransport(
+            [
+                (200, {'code': 0, 'task_id': 'image-clone'}),
+                (200, {'code': 0, 'task_id': 'video-clone'}),
+                (200, {'code': 0, 'task_id': 'video-url-clone'}),
+            ]
+        )
+        media, client = make_client(transport, hifly=HiFlyConfig(token='token'))
+        self.addCleanup(client.close)
+        media.avatar.clone(AvatarCloneRequest(image_file_id='image-file', model='3'), provider='hifly')
+        media.avatar.clone(AvatarCloneRequest(video_file_id='video-file'), provider='hifly')
+        media.avatar.clone(AvatarCloneRequest(video_url='https://in/source.mp4'), provider='hifly')
+
+        image_request = transport.requests[0]
+        self.assertEqual(image_request.url.path, '/api/v2/hifly/avatar/create_by_image')
+        image_body = json.loads(image_request.content)
+        self.assertEqual(image_body['file_id'], 'image-file')
+        self.assertEqual(image_body['model'], 3)
+        video_file_request = transport.requests[1]
+        self.assertEqual(video_file_request.url.path, '/api/v2/hifly/avatar/create_by_video')
+        self.assertEqual(json.loads(video_file_request.content)['file_id'], 'video-file')
+        self.assertEqual(transport.requests[2].url.path, '/api/v2/hifly/avatar/create_by_video')
+        self.assertEqual(json.loads(transport.requests[2].content)['video_url'], 'https://in/source.mp4')
+
+    def test_hifly_list_voices_kind_defaults_to_self_cloned(self):
+        transport = RecordingTransport(
+            [
+                (200, {'code': 0, 'data': [{'voice': 'self-1'}]}),
+                (200, {'code': 0, 'data': [{'voice': 'public-1'}]}),
+            ]
+        )
+        media, client = make_client(transport, hifly=HiFlyConfig(token='token'))
+        self.addCleanup(client.close)
+        media.speech.list_voices(provider='hifly')
+        media.speech.list_voices(provider='hifly', kind=2)
+        self.assertEqual(
+            dict(transport.requests[0].url.params), {'page': '1', 'size': '20', 'kind': '1'}
+        )
+        self.assertEqual(
+            dict(transport.requests[1].url.params), {'page': '1', 'size': '20', 'kind': '2'}
+        )
+        with self.assertRaisesRegex(ValueError, 'positive integer'):
+            media.speech.list_voices(provider='hifly', kind=0)
+
+    def test_hifly_digital_human_rejects_resolution_ratio_and_seed(self):
+        transport = RecordingTransport([])
+        media, client = make_client(transport, hifly=HiFlyConfig(token='token'))
+        self.addCleanup(client.close)
+        for kwargs in ({'resolution': '720P'}, {'ratio': '16:9'}, {'seed': 1}):
+            with self.subTest(kwargs=kwargs), self.assertRaises(UnsupportedCapabilityError):
+                media.avatar.render(
+                    DigitalHumanRequest(avatar='avatar-1', text='text', voice='voice', **kwargs),
+                    provider='hifly',
+                )
+        self.assertEqual(len(transport.requests), 0)
+
+    def test_aliyun_image_to_video_rejects_unsupported_options(self):
+        transport = RecordingTransport([])
+        media, client = make_client(transport, aliyun=AliyunConfig(api_key='key', workspace_id='workspace'))
+        self.addCleanup(client.close)
+        cases = (
+            (ImageToVideoRequest(image='https://in/image.png', ratio='16:9'), 'auto'),
+            (ImageToVideoRequest(image='https://in/image.png', seed=7), 'seed'),
+            (ImageToVideoRequest(image='https://in/image.png', negative_prompt='blur'), 'negative_prompt'),
+        )
+        for request, message in cases:
+            with self.subTest(message=message), self.assertRaisesRegex(UnsupportedCapabilityError, message):
+                media.video.from_image(request, provider='aliyun')
+        self.assertEqual(len(transport.requests), 0)
+
+    def test_aliyun_digital_human_rejects_unsupported_resolution_and_ratio(self):
+        transport = RecordingTransport([])
+        media, client = make_client(transport, aliyun=AliyunConfig(api_key='key', workspace_id='workspace'))
+        self.addCleanup(client.close)
+        for kwargs in ({'resolution': '1080P'}, {'ratio': '16:9'}):
+            with self.subTest(kwargs=kwargs), self.assertRaises(UnsupportedCapabilityError):
+                media.avatar.render(
+                    DigitalHumanRequest(
+                        image_url='https://in/person.jpg', audio_url='https://in/audio.mp3', **kwargs
+                    ),
+                    provider='aliyun',
+                )
+        self.assertEqual(len(transport.requests), 0)
+
+    def test_volcengine_image_to_video_lowercases_resolution(self):
+        transport = RecordingTransport([(200, {'id': 'video-1'})])
+        media, client = make_client(transport, volcengine=VolcengineConfig(ark_api_key='ark-key'))
+        self.addCleanup(client.close)
+        media.video.from_image(
+            ImageToVideoRequest(image='https://in/image.png', resolution='1080P', ratio='16:9'),
+            provider='volcengine',
+        )
+        body = json.loads(transport.requests[0].content)
+        self.assertEqual(body['resolution'], '1080p')
+        self.assertEqual(body['ratio'], '16:9')
+
+    def test_volcengine_visual_task_failure_carries_error_fields(self):
+        visual = FakeVisualService()
+
+        def failed_query(body):
+            visual.calls.append(('query', body))
+            return {
+                'code': 10000,
+                'data': {
+                    'status': 'failed',
+                    'code': 'RequestDeniedByContentFilter',
+                    'message': '内容违规',
+                },
+            }
+
+        visual.cv_sync2async_get_result = failed_query
+        with patch(
+            'openapi.providers.media_generation.adapters.volcengine.create_visual_service',
+            return_value=visual,
+        ):
+            media, client = make_client(
+                RecordingTransport([]),
+                volcengine=VolcengineConfig(access_key='ak', secret_key='sk'),
+            )
+            self.addCleanup(client.close)
+            submitted = media.avatar.render(
+                DigitalHumanRequest(
+                    image_url='https://in/person.jpg',
+                    audio_url='https://in/audio.mp3',
+                ),
+                provider='volcengine',
+            )
+            completed = media.task.get(submitted.task_ref)
+        self.assertEqual(completed.status, ModelStatus.FAILED)
+        self.assertEqual(completed.error_code, 'RequestDeniedByContentFilter')
+        self.assertEqual(completed.error_kind, ProviderErrorCode.CONTENT_REJECTED)
+        self.assertFalse(completed.retryable)
+        self.assertFalse(completed.fallback_allowed)
 
     def test_hifly_avatar_list_rejects_invalid_pagination_without_request(self):
         transport = RecordingTransport([])
@@ -828,6 +1426,71 @@ class MediaTests(unittest.TestCase):
             with self.subTest(kwargs=kwargs), self.assertRaisesRegex(ValueError, 'positive integer'):
                 media.avatar.list(provider='hifly', **kwargs)
         self.assertEqual(len(transport.requests), 0)
+
+
+class MediaDownloadTests(unittest.TestCase):
+    def test_download_returns_content_and_type(self):
+        transport = RecordingTransport([(200, b'ID3-audio', {'content-type': 'audio/mpeg'})])
+        media, client = make_client(transport)
+        self.addCleanup(client.close)
+        result = media.download('https://cdn.example.com/audio.mp3')
+        self.assertEqual(result.content, b'ID3-audio')
+        self.assertEqual(result.content_type, 'audio/mpeg')
+
+    def test_download_classifies_http_and_network_errors(self):
+        for response, expected_code, expected_status in (
+            ((503, {'message': 'busy'}), ProviderErrorCode.SERVICE_UNAVAILABLE, 503),
+            ((429, {'message': 'busy'}), ProviderErrorCode.RATE_LIMITED, 429),
+        ):
+            with self.subTest(status=response[0]):
+                media, client = make_client(RecordingTransport([response]))
+                try:
+                    with self.assertRaises(ProviderAPIError) as raised:
+                        media.download('https://cdn.example.com/audio.mp3')
+                    error = raised.exception
+                    self.assertEqual(error.code, expected_code)
+                    self.assertEqual(error.http_status, expected_status)
+                    self.assertTrue(error.retryable)
+                    self.assertTrue(error.fallback_allowed)
+                finally:
+                    client.close()
+
+        media, client = make_client(RecordingTransport([('read_timeout', 'timed out')]))
+        try:
+            with self.assertRaises(ProviderAPIError) as raised:
+                media.download('https://cdn.example.com/audio.mp3')
+            error = raised.exception
+            self.assertEqual(error.code, ProviderErrorCode.TIMEOUT)
+            self.assertTrue(error.retryable)
+            self.assertTrue(error.fallback_allowed)
+        finally:
+            client.close()
+
+    def test_download_to_writes_stream_to_file_and_stream(self):
+        transport = RecordingTransport([(200, b'ID3-part-one-part-two', {'content-type': 'audio/mpeg'})])
+        media, client = make_client(transport)
+        self.addCleanup(client.close)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            destination = Path(temp_dir) / 'audio.mp3'
+            media.download_to('https://cdn.example.com/audio.mp3', destination)
+            self.assertEqual(destination.read_bytes(), b'ID3-part-one-part-two')
+
+        stream_transport = RecordingTransport([(200, b'RIFF-audio', {'content-type': 'audio/wav'})])
+        media, client = make_client(stream_transport)
+        self.addCleanup(client.close)
+        buffer = io.BytesIO()
+        media.download_to('https://cdn.example.com/audio.wav', buffer)
+        self.assertFalse(buffer.closed)
+        self.assertEqual(buffer.getvalue(), b'RIFF-audio')
+
+    def test_download_to_local_io_error_is_not_a_provider_error(self):
+        transport = RecordingTransport([(200, b'audio', {'content-type': 'audio/mpeg'})])
+        media, client = make_client(transport)
+        self.addCleanup(client.close)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            missing = Path(temp_dir) / 'missing-dir' / 'audio.mp3'
+            with self.assertRaises(OSError):
+                media.download_to('https://cdn.example.com/audio.mp3', missing)
 
 
 class ReliabilityTests(unittest.TestCase):
@@ -852,6 +1515,106 @@ class ReliabilityTests(unittest.TestCase):
         with self.assertRaises(ProviderAPIError):
             media.video.from_image(ImageToVideoRequest(image='https://in/image.jpg'), provider='aliyun')
         self.assertEqual(len(submit_transport.requests), 1)
+
+    def test_provider_errors_expose_safe_retry_and_fallback_guidance(self):
+        auth_transport = RecordingTransport([(401, {'code': 'Unauthorized', 'message': 'token expired'})])
+        media, client = make_client(auth_transport, hifly=HiFlyConfig(token='secret'))
+        self.addCleanup(client.close)
+        with self.assertRaises(ProviderAPIError) as raised:
+            media.avatar.list(provider='hifly')
+        error = raised.exception
+        self.assertEqual(error.code, ProviderErrorCode.AUTH_FAILED)
+        self.assertEqual(error.http_status, 401)
+        self.assertTrue(error.fallback_allowed)
+        self.assertFalse(error.remote_task_may_exist)
+
+        query_transport = RecordingTransport([(503, {'code': 'InternalError', 'message': 'busy'})] * 4)
+        media, client = make_client(
+            query_transport,
+            aliyun=AliyunConfig(api_key='key', workspace_id='workspace'),
+        )
+        self.addCleanup(client.close)
+        with self.assertRaises(ProviderAPIError) as raised:
+            media.task.get(TaskRef(provider='aliyun', operation='digital_human', task_id='task'))
+        error = raised.exception
+        self.assertEqual(error.code, ProviderErrorCode.SERVICE_UNAVAILABLE)
+        self.assertTrue(error.retryable)
+        self.assertFalse(error.fallback_allowed)
+        self.assertTrue(error.remote_task_may_exist)
+
+    def test_content_rejection_matches_camelcase_code_without_message_markers(self):
+        transport = RecordingTransport(
+            [
+                (
+                    200,
+                    {
+                        'output': {
+                            'task_status': 'FAILED',
+                            'code': 'DataInspectionFailed',
+                            'message': 'request terminated',
+                        }
+                    },
+                ),
+            ]
+        )
+        media, client = make_client(transport, aliyun=AliyunConfig(api_key='key', workspace_id='workspace'))
+        self.addCleanup(client.close)
+        result = media.task.get(TaskRef(provider='aliyun', operation='image_to_video', task_id='task'))
+        self.assertEqual(result.error_kind, ProviderErrorCode.CONTENT_REJECTED)
+        self.assertEqual(result.error_code, 'DataInspectionFailed')
+        self.assertFalse(result.retryable)
+        self.assertFalse(result.fallback_allowed)
+
+    def test_ambiguous_submission_timeout_does_not_allow_fallback(self):
+        transport = RecordingTransport([('read_timeout', 'submission timed out')])
+        media, client = make_client(transport, aliyun=AliyunConfig(api_key='key', workspace_id='workspace'))
+        self.addCleanup(client.close)
+        with self.assertRaises(ProviderAPIError) as raised:
+            media.video.from_image(ImageToVideoRequest(image='https://in/image.jpg'), provider='aliyun')
+        error = raised.exception
+        self.assertEqual(error.code, ProviderErrorCode.TIMEOUT)
+        self.assertTrue(error.retryable)
+        self.assertTrue(error.remote_task_may_exist)
+        self.assertFalse(error.fallback_allowed)
+
+    def test_terminal_content_rejection_never_allows_provider_fallback(self):
+        transport = RecordingTransport(
+            [
+                (
+                    200,
+                    {
+                        'output': {
+                            'task_status': 'FAILED',
+                            'code': 'DataInspectionFailed',
+                            'message': 'content safety rejection',
+                        }
+                    },
+                ),
+                (
+                    200,
+                    {
+                        'output': {
+                            'task_status': 'FAILED',
+                            'code': 'InternalError',
+                            'message': 'provider overloaded',
+                        }
+                    },
+                ),
+            ]
+        )
+        media, client = make_client(transport, aliyun=AliyunConfig(api_key='key', workspace_id='workspace'))
+        self.addCleanup(client.close)
+        task = TaskRef(provider='aliyun', operation='image_to_video', task_id='task')
+
+        rejected = media.task.get(task)
+        unavailable = media.task.get(task)
+
+        self.assertEqual(rejected.error_kind, ProviderErrorCode.CONTENT_REJECTED)
+        self.assertFalse(rejected.retryable)
+        self.assertFalse(rejected.fallback_allowed)
+        self.assertEqual(unavailable.error_kind, ProviderErrorCode.SERVICE_UNAVAILABLE)
+        self.assertTrue(unavailable.retryable)
+        self.assertTrue(unavailable.fallback_allowed)
 
     def test_query_retries_network_errors_and_redacts_exhausted_error(self):
         recovering = RecordingTransport(

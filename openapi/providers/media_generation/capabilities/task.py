@@ -6,9 +6,11 @@ from openapi.providers.media_generation.models import (
     MediaOutput,
     ModelResult,
     TaskRef,
+    TextOutput,
+    VoiceOutput,
 )
 
-TaskResult = ModelResult[MediaOutput | AvatarOutput | AudioOutput]
+TaskResult = ModelResult[MediaOutput | AvatarOutput | AudioOutput | TextOutput | VoiceOutput]
 
 
 class TaskCapability(Protocol):
