@@ -1,10 +1,9 @@
-import time
-import json
 import hashlib
-from typing import Mapping, Any, Generic
+import json
+import time
+from typing import Any, Generic, Mapping
 
 from openapi.providers.base import BaseClient, BaseResult, T
-
 
 """
 DocRef: https://help.polyv.net/#/vod/api/playsafe/token/create_token

@@ -130,3 +130,5 @@ dmypy.json
 .pyre/
 
 examples/config.dev.yaml
+examples/media_generation/.env
+examples/media_generation/output/

@@ -1,8 +1,10 @@
 httpx==0.28.1
 pydantic==2.13.4
 pycryptodome==3.23.0
-cryptography==46.0.7
-pyOpenSSL==25.3.0
+cryptography==50.0.0
+pyOpenSSL==26.4.0
 ruff==0.16.3
+setuptools
 inflection
+oss2>=2.19.1
 twine

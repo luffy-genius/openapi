@@ -1,6 +1,6 @@
 import json as _json
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Union, TypeVar, Generic
+from typing import Generic, List, Optional, TypeVar
 
 import httpx
 from pydantic import BaseModel, Field

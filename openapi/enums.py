@@ -20,7 +20,9 @@ class ChoicesMeta(enum.EnumMeta):
             # assignment in enum's classdict.
             dict.__setitem__(classdict, key, value)
         cls = super().__new__(metacls, classname, bases, classdict, **kwds)
-        cls._value2label_map_ = dict(zip(cls._value2member_map_, labels, strict=True))
+        cls._value2label_map_ = {
+            value: labels[index] for index, value in enumerate(cls._value2member_map_)
+        }
         # Add a label property to instances of enum which uses the enum member
         # that is passed in as "self" as the value to use when looking up the
         # label in the choices.
