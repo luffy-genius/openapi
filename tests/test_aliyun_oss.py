@@ -1,3 +1,4 @@
+import importlib.util
 import io
 import tempfile
 import unittest
@@ -398,6 +399,7 @@ class ClientTests(unittest.TestCase):
 
 
 class PackagingTests(unittest.TestCase):
+    @unittest.skipUnless(importlib.util.find_spec('setuptools'), 'setuptools is required to build the wheel')
     def test_wheel_contains_optional_extras_and_modules(self):
         import subprocess
         import sys
