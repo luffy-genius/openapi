@@ -125,6 +125,8 @@ print(image.output.urls)
 | 数字人 | OmniHuman | Wan S2V | HiFly V2 | — | — |
 | 图片 / 视频数字人克隆 | — | — | HiFly V2 | — | — |
 
+数字人三家供应商（OmniHuman / Wan S2V / HiFly V2）的差异与示例见 [docs/media-generation/digital-human.md](docs/media-generation/digital-human.md)。
+
 `AudioConfig` 中的 `speech_rate`、`loudness_rate` 和 `pitch_rate` 使用统一浮点倍率，`1.0` 表示供应商默认值。语速和音高支持 `0.5`–`2.0`，响度支持 `0.1`–`2.0`。阿里云分别转换为 `rate`、`volume=round(50*loudness_rate)` 和 `pitch`，火山引擎分别转换为 `speed_ratio`、`volume_ratio` 和 `pitch_ratio`；飞影不支持这三个调节项。显式的 `AudioConfig` 值优先于 `parameters` 中的供应商透传值。
 
 SiliconFlow 文本转语音调用官方 `/audio/speech` 接口：`base_url` 默认国内站 `https://api.siliconflow.cn/v1`，国际站通过 `base_url` 覆盖；模型由请求的 `model` 指定。请求级参考音频通过动态 `references` 传入（`reference_audio` + `reference_text`，音频为官方 `data:audio/*;base64,...` 形式），与 `voice` 互斥；已有持久音色通过 `default_voice` 使用，参考音频不再隐式创建持久音色。输出格式（`mp3`/`opus`/`wav`/`pcm`）、采样率及其与格式的组合（如 `mp3` 仅 `32000`/`44100`、`opus` 仅 `48000`）、语速（`0.25`–`4.0`）和增益（`-10`–`10` dB）由 SDK 集中校验；SDK 显式使用非流式响应。
