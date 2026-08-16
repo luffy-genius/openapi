@@ -2,7 +2,25 @@
 
 ### 概述
 
-`OpenAPI` 集成了各类第三方的 SDK。
+`OpenAPI` 集成了各类第三方的 SDK：支付、开放平台与协同、电商与知识付费、视频云、短信、CRM、对象存储和统一媒体客户端。所有 provider 共享统一的 `BaseClient` / `BaseResult` 抽象：凭证由业务显式注入、access token 自动缓存与刷新、webhook 回调签名校验；媒体与存储模块额外提供机器可读的错误分类（重试 / 降级建议）与供应商中立的接口抽象。
+
+| 分类 | Provider | 模块 | 说明 |
+| --- | --- | --- | --- |
+| 对象存储 | 阿里云 OSS | `openapi.providers.storages.aliyun_oss` | 上传、流式下载、分页列表、签名 URL，V4 签名 |
+| 统一媒体 | 火山引擎 / 阿里云百炼 / 飞影 / SiliconFlow / DeepSeek | `openapi.providers.media_generation` | 文本、语音、图片、视频、数字人 |
+| 支付 | 支付宝 | `openapi.providers.alipay` | 开放平台网关，RSA2 证书签名 |
+| 支付 | 微信支付 | `openapi.providers.wechat.pay` | V2 XML 协议 |
+| 支付 | 联想支付 | `openapi.providers.lenovo` | 云平台 REST，RSA 签名 |
+| 开放平台 | 微信服务号 / 视频号 | `openapi.providers.wechat.open` | 网页授权、消息加解密 |
+| 开放平台 | 飞书 | `openapi.providers.feishu.open` / `feishu.bot` | 开放平台与群组机器人 |
+| 开放平台 | 小红书 | `openapi.providers.xhs` | ark 电商开放平台 |
+| 电商 | 抖店 | `openapi.providers.doudian` | 抖音电商开放平台 |
+| 知识付费 | 小鹅通 | `openapi.providers.xiaoetong` | 内容分销 |
+| 知识付费 | 易知课堂 | `openapi.providers.yizhi` | 开放 API |
+| 视频云 | Polyv | `openapi.providers.polyv` | 播放安全 token |
+| 短信 | 赛邮 / 中网信 | `openapi.providers.sms.submail` / `sms.wgws` | 云通信短信 |
+| CRM | 探马 / 云朵 | `openapi.providers.crm.tanmarket` / `crm.yunduo` | 客户线索管理 |
+| 通用 | 阿里云 RPC | `openapi.providers.aliyun` | 通用 RPC 风格，HMAC-SHA1 签名 |
 
 ### 安装
 
@@ -10,9 +28,16 @@
 pip3 install openapipy
 ```
 
+阿里云 OSS 与火山 OmniHuman 依赖官方 SDK，通过 extra 安装：
+
+```bash
+pip install 'openapipy[aliyun-oss]'
+pip install 'openapipy[media-generation]'
+```
+
 ### 使用
 
-#### 阿里云 OSS
+#### 对象存储
 
 `openapi.providers.storages.aliyun_oss` 提供框架无关的对象上传、下载、删除、查询、分页列表和 URL 处理，使用推荐的 V4 签名。OSS SDK 通过 extra 安装：
 
@@ -58,14 +83,11 @@ pip install 'openapipy[media-generation]'
 ```python
 from openapi.providers.media_generation import (
     AliyunConfig,
-    AudioConfig,
     DeepSeekConfig,
     ImageGenerationRequest,
     MediaClient,
     ModelProvider,
     TextOptimizationRequest,
-    TextToSpeechRequest,
-    TranslateToSpeechRequest,
 )
 
 media = MediaClient.create(
@@ -84,32 +106,9 @@ image = media.image.generate(
     provider=ModelProvider.ALIYUN,
 )
 print(image.output.urls)
-
-audio = media.speech.synthesize(
-    TextToSpeechRequest(
-        text='Hello from the media client.',
-        model='qwen-audio-3.0-tts-flash',
-        voice='longanhuan_v3.6',
-        language='en',
-        audio_config=AudioConfig(format='wav', sample_rate=24000),
-    ),
-    provider=ModelProvider.ALIYUN,
-)
-print(audio.output.urls or [audio.output.audio_base64])
-
-translated_audio = media.workflow.translate_to_speech(
-    TranslateToSpeechRequest(
-        text='今天天气很好。',
-        source_language='Chinese',
-        target_language='English',
-        translation_model='your-deepseek-model',
-        speech_model='qwen-audio-3.0-tts-flash',
-        voice='longanhuan_v3.6',
-    ),
-    text_provider=ModelProvider.DEEPSEEK,
-    speech_provider=ModelProvider.ALIYUN,
-)
 ```
+
+文本转语音、语音识别、声音复刻、图生图、图生视频、数字人和翻译后合成等能力按同一模式调用（`media.speech.synthesize(...)`、`media.video.from_image(...)`、`media.workflow.translate_to_speech(...)` 等），真实联调见[独立示例包](examples/media_generation/README.md)。
 
 异步提交返回的 `TaskRef` 包含供应商、操作、任务 ID 和必要的模型信息，可序列化保存，并在服务重启后传给 `media.task.get()` 或 `media.task.wait()`。`wait()` 本地超时不会取消云端任务。单次请求的 `model` 会覆盖该次调用使用的模型，但不会修改客户端默认配置。
 
@@ -132,9 +131,9 @@ SiliconFlow 文本转语音调用官方 `/audio/speech` 接口：`base_url` 默�
 
 语音的多语言能力是“合成传入的目标语言文本”，不会自动翻译；中文文案直接生成英文音频请使用 `media.workflow.translate_to_speech()`。组合调用会在翻译前检查语音供应商的能力、配置和音频选项，避免已知无法合成时仍发起翻译请求。SDK 不会自动转存供应商结果；业务可用 `media.download()` 下载临时 URL，大文件使用流式 `media.download_to(url, destination)` 避免整体载入内存，再通过注入的对象存储客户端持久化。下载的本地写盘失败以 `OSError` 上抛，远端 HTTP/网络错误统一分类为 `ProviderAPIError`。
 
-真实供应商联调请使用仓库内的[独立示例包](examples/media_generation/README.md)。复制 `.env.example` 保存供应商配置，通过 `set -a; source examples/media_generation/.env; set +a` 导入系统环境变量；请求输入和参考参数直接在对应能力脚本顶部修改。再按文档逐项执行 `python -m examples.media_generation.<provider>.<capability>`。脚本不会一次性触发所有计费能力；异步任务会先保存 `TaskRef`，超时后可继续查询。
+#### 支付
 
-#### 支付宝
+##### 支付宝
 
 > https://opendocs.alipay.com/open/270/105898
 
@@ -173,7 +172,7 @@ result: Result = client.request(
 print(result)
 ```
 
-#### 微信
+##### 微信支付
 
 ```python3
 import json
@@ -225,7 +224,79 @@ if result.result_code == wxpay_api.codes.SUCCESS:
     print(jsapi_data)
 ```
 
-#### 抖店
+##### 联想支付
+
+```python3
+from openapi.providers.lenovo import Client, Result
+
+client = Client(
+    app_id='your_app_id',
+    mch_id='your_mch_id',
+    private_key_path='./resources/private_key.pem',
+    public_key_path='./resources/public_key.pem',
+)
+# 发起请求（endpoint 为接口路径，数据由接口文档定义）
+result: Result = client.request('/pay/create', data={'order_no': 'demo'})
+print(result)
+```
+
+#### 开放平台与协同
+
+##### 微信服务号 / 视频号
+
+```python3
+from openapi.providers.wechat.open import Client
+
+client = Client(app_id='your_app_id', secret='your_secret')
+
+# 网页授权地址 / 扫码登录地址
+print(client.get_authorize_url(scope='snsapi_userinfo', state='state', redirect_uri='https://example.com/cb'))
+print(client.get_qrcode_url(state='state', redirect_uri='https://example.com/cb'))
+
+# 调用接口（endpoint 为公众号 / 视频号接口路径）
+result = client.request('get', '/cgi-bin/user/info', params={'openid': 'openid'})
+print(result)
+```
+
+##### 飞书
+
+```python3
+from openapi.providers.feishu.open import Client
+
+client = Client(app_id='your_app_id', secret='your_secret')
+result = client.request('get', '/contact/v3/users', params={'user_id_type': 'open_id'})
+print(result)
+```
+
+群组机器人：
+
+```python3
+from openapi.providers.feishu.bot import Client as BotClient
+
+bot = BotClient('your_bot_secret')
+result = bot.request('post', 'v2/hook/your_hook_token', json={'msg_type': 'text', 'content': {'text': 'hello'}})
+print(result)
+```
+
+##### 小红书
+
+```python3
+from openapi.providers.xhs import Client
+
+client = Client(
+    app_id='your_app_id',
+    secret='your_secret',
+    user_id='your_user_id',
+    seller_id='your_seller_id',
+)
+# endpoint / action / 参数由小红书 ark 开放平台接口文档定义
+result = client.request('post', '/ark/open_api/v3/common_controller', data={})
+print(result)
+```
+
+#### 电商与知识付费
+
+##### 抖店
 
 > https://op.jinritemai.com/docs/api-docs/13/54
 
@@ -238,7 +309,7 @@ result: Result = client.request('post', '/product/listV2', data={'page': 1, 'siz
 print(result)
 ```
 
-#### 小鹅通
+##### 小鹅通
 
 > https://api-doc.xiaoe-tech.com/?s=/2&page_id=420
 
@@ -250,6 +321,99 @@ client = XiaoetongClient('your_appid', 'your_secret', 'your_client_id')
 result: Result = client.request('post', '/xe.distributor.list.get/1.0.0', data={})
 print(result)
 ```
+
+##### 易知课堂
+
+```python3
+from openapi.providers.yizhi import Client, Result
+
+client = Client(app_id='your_app_id', secret='your_secret')
+# endpoint 为易知课堂开放接口路径
+result: Result = client.request('post', '/open-api/course/list', data={})
+print(result)
+```
+
+#### 视频云
+
+##### Polyv
+
+> https://help.polyv.net/#/vod/api/playsafe/token/create_token
+
+```python3
+from openapi.providers.polyv import Client, Result
+
+client = Client(user_id='your_user_id', secret='your_secret')
+result: Result = client.request('post', '/playsafe/token/create_token', data={'vid': 'your_video_id'})
+print(result)
+```
+
+#### 短信
+
+##### 赛邮云
+
+```python3
+from openapi.providers.sms.submail import Client
+
+client = Client(app_id='your_app_id', app_key='your_app_key')
+result = client.request('post', '/message/xsend', data={'to': '138xxxx', 'project': 'your_project', 'vars': '{}'})
+print(result)
+```
+
+##### 中网信
+
+```python3
+from openapi.providers.sms.wgws import Client
+
+client = Client(app_id='your_app_id', app_key='your_app_key')
+# endpoint 与参数由中网信短信接口文档定义
+result = client.request('post', '/sms/send', data={})
+print(result)
+```
+
+#### CRM
+
+##### 探马
+
+```python3
+from openapi.providers.crm.tanmarket import Client as TanmarketClient
+
+client = TanmarketClient(app_id='your_app_id', app_key='your_app_key')
+result = client.request('post', '/api/lead/list', data={})
+print(result)
+```
+
+##### 云朵
+
+```python3
+from openapi.providers.crm.yunduo import Client as YunduoClient
+
+client = YunduoClient(company_id='your_company_id')
+result = client.request('post', '/api/customer/list', sign_key='your_sign_key', sign_type='MD5', data={})
+print(result)
+```
+
+#### 通用阿里云 RPC
+
+适用于未单独封装的阿里云 OpenAPI 服务（HMAC-SHA1 签名）：
+
+```python3
+from openapi.providers.aliyun import Client, Result
+
+client = Client('your_app_id', 'your_secret')
+# 以 dysmsapi 短信为例（联调脚本见 examples/aliyun）
+result: Result = client.request(
+    'post',
+    prefix='dysmsapi',
+    action='SendSms',
+    version='2017-05-25',
+    params={'PhoneNumbers': '138xxxx', 'SignName': 'your_sign', 'TemplateCode': 'SMS_xxx', 'TemplateParam': '{}'},
+)
+print(result)
+```
+
+#### 联调示例
+
+仓库的 `examples/` 目录按 provider 组织真实联调脚本，凭证与 webhook 等配置统一放在 `examples/config.yaml`（可复制为 `config.dev.yaml` 后填写）。媒体供应商的联调说明独立维护在 [examples/media_generation/README.md](examples/media_generation/README.md)。
 
 ### 支持
 
