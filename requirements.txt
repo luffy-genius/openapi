@@ -1,4 +1,4 @@
-httpx==0.28.1
+httpx==0.29.0
 pydantic==2.13.4
 pycryptodome==3.23.0
 cryptography==50.0.0
